@@ -1,12 +1,17 @@
 Package: archmicrobial2023
-Title: What the Package Does (One Line, Title Case)
+Title: Analysis for ancient microbial DNA
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R:
+    person("Li-Ying", "Wang", , "liyingw15@gmail.com", role = c("aut", "cre"))
+Description: Analysis for ancient microbial DNA
 License: MIT + file LICENSE
 ByteCompile: true
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
+Imports: here,
+    knitr (>= 1.43),
+    rmarkdown (>= 2.23)
+Suggests: devtools,
+    git2r
