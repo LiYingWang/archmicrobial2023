@@ -38,6 +38,7 @@ metadata_V4 <-
          potin_con = case_when(group == "pot-inside" ~ "pot-interior", type== "con" ~ "control")) %>%
   relocate(Group, type, group, sample, area, site)
 
+# taxa level not ASV level
 composite_V4 <-
   inner_join(shared_V4_rarefy, taxonomy_V4, by= "otu") %>%
   group_by(Group, taxonomy) %>%
@@ -51,7 +52,7 @@ composite_V4 <-
 sig_genera <-
   composite_V4 %>%
   nest(data = -taxonomy) %>% #c(-taxonomy, -otu)
-  mutate(test = map(.x=data, ~wilcox.test(rel_abund~potin_con, data=.x, exact = FALSE) %>%  tidy)) %>%
+  mutate(test = map(.x=data, ~wilcox.test(rel_abund~  pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
   #mutate(p.adjust = p.adjust(p.value, method="BH")) %>% #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6099145/
@@ -64,13 +65,14 @@ composite_V4_plot <-
   composite_V4 %>%
   inner_join(sig_genera, by="taxonomy") %>%
   filter(!is.na(pot)) %>%
-  mutate(taxonomy = str_extract(taxonomy, "(g__)([A-z]+)", group = 2), #"g__[A-z]+"
-         taxonomy = str_replace(taxonomy, "(.*)", "*\\1*"),
-         taxonomy = str_replace(taxonomy, "\\*Candidatus_(.*)\\*", # "\\*(.*)_Candidatus\\*"
+  mutate(taxa = ifelse(str_detect(taxonomy, "g__"), str_extract(taxonomy, "(g__)([A-z]+)", group =2),
+                       str_extract(taxonomy, "(f__)([A-z]+)", group =2)), #"g__[A-z]+
+         taxa= str_replace(taxa, "(.*)", "*\\1*"),
+         taxa = str_replace(taxa, "\\*Candidatus_(.*)\\*", # "\\*(.*)_Candidatus\\*"
                                 "Candidatus<br>*\\1*")) %>%
   mutate(rel_abund = 100 * (rel_abund + 1/15000), # make it percentage and add a very small number
-         pot = factor(pot, levels = c("outside", "inside"))) %>%
-  ggplot(aes(x=rel_abund, y=reorder(taxonomy, rel_abund), fill=pot)) +
+         pot = factor(pot, levels = c("exterior", "interior"))) %>%
+  ggplot(aes(x=rel_abund, y=reorder(taxa, rel_abund), fill=pot)) +
   geom_boxplot(aes(fill = pot),show.legend = FALSE) +
   #geom_vline(xintercept = 100/8490, size=0.5, color="gray") + # limit of detection; https://www.nature.com/articles/s41467-023-38694-0
   geom_jitter(position = position_jitterdodge(dodge.width = 0.8,
@@ -81,15 +83,15 @@ composite_V4_plot <-
                #color="black", show.legend = FALSE) +
   scale_x_log10() +
   scale_color_manual(NULL,
-                     breaks = c("inside", "outside"),
+                     breaks = c("interior", "exterior"),
                      values = c("#238A8DFF", "ivory3"),
                      labels = c("Interior", "Exterior")) +
   scale_fill_manual(NULL,
-                    breaks = c("inside", "outside"),
+                    breaks = c("interior", "exterior"),
                     values = c("#238A8DFF", "ivory3"),
                     labels = c("Interior", "Exterior")) +
   labs(x= "Relative abundance (%)",y= NULL) +
-  theme_classic() +
+  #theme_classic() +
   theme(axis.text.y = element_markdown())
 
 # pairwise wilcox test
