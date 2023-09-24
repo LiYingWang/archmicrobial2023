@@ -1,3 +1,4 @@
+# run 004 code first to get rarefied data
 library(ggtext)
 # function to get the top ASVs based on the counts by 4 groups
 top_freq_ASV <- function(df, num){
@@ -62,6 +63,7 @@ V4_heatmap_plot <-
 
 # genus level and heatmap
 V4_tax_Genus_for_heatmap <- top_freq_genus(V4_tax_rarefy_df, 10) # "g__Candidatus_Xiphinematobacter"
+sep_line <- data.frame(x= c(3.5, 9.5, 15.5), y= c(0.5, 0.5,0.5), xend= c(3.5, 9.5, 15.5), yend= c(18.5, 18.5, 18.5))
 V4_tax_genus_heatmap <-
   V4_tax_rarefy_df %>%
   filter(Genus %in% V4_tax_Genus_for_heatmap) %>%
@@ -78,6 +80,7 @@ V4_tax_genus_heatmap <-
   coord_equal() +
   scale_y_discrete(position = "right") +
   labs(x = NULL, y = NULL) +
+  geom_segment(data=sep_line, aes(x,y,xend=xend, yend=yend), linewidth=0.5, color= "white", inherit.aes=F) +
   theme_minimal() +
   theme(axis.text.y = element_markdown(), legend.position="left")
 
