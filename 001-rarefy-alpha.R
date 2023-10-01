@@ -68,6 +68,11 @@ rich_V1_test  <- richness_test(rarefy_V1_reads_only, V1_meta)
 rich_V6_test  <- richness_test(rarefy_V6_reads_only, V6_meta)
 rich_ITS1_test  <- richness_test(rarefy_ITS1_reads_only, ITS1_meta)
 
+sppdiv_aov_V4 <- aov(diversity(rarefy_V4_reads_only) ~ group, data =V4_meta)
+sppdiv_aov_V1 <- aov(diversity(rarefy_V1_reads_only) ~ group, data =V1_meta)
+sppdiv_aov_V6 <- aov(diversity(rarefy_V6_reads_only) ~ group, data =V6_meta)
+sppdiv_aov_ITS1 <- aov(diversity(rarefy_ITS1_reads_only) ~ group, data =ITS1_meta)
+
 # functions calculate richness, Chao1, evenness index, and Shannon index using vegan package
 # follow https://scienceparkstudygroup.github.io/microbiome-lesson/04-alpha-diversity/index.html
 alpha_cal_df <- function(df1, df2){
