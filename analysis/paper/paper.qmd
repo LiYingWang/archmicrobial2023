@@ -1,30 +1,27 @@
 ---
-title: "Title Goes Here"
+title: "Characterization of the microbial and fungal communities in ancient pottery from Neolithic southwestern China"
 author:
-  - Jane Doe:
+  - Li-Ying Wang:
       correspondence: "yes"
-      email: janedoe@fosg.org
-      orcid: 0000-0003-1689-0557
+      email: liying15@gmail.com
+      orcid: 0000-0001-9060-2125
       institute:
-        - fosg
-        - fop
-  - John Q. Doe:
-      institute: fosg
+        - AS
+  - Kuei-Chen Lin:
+      institute: AS
       orcid: 0000-0003-1689-0558
-  - Peder Ås:
-      institute: fosg
-      orcid: 0000-0003-1689-0559
-  - Juan Pérez:
+  - Zhiqing Zhou:
       orcid: 0000-0003-1689-0551
       institute:
-        - name: Acme Corporation
-  - Max Mustermann:
-      orcid: 0000-0003-1689-0552
+        - name: Chengdu Institute of Cultural Relics and Archaeology
+  - Yin-Ru Chiang:
+      correspondence: "yes"
+      institute: AS
+      orcid: 0000-0003-1689-0559
 institute:
-  - fosg:
-      name: Formatting Open Science Group
-      address: 23 Science Street, Eureka, Mississippi, USA
-  - fop: Federation of Planets
+  - AS:
+      name: Academia sinica
+      address: 130, Section 2, Academia Rd, Nangang District, Taipei City, Taiwan
 title-block-published: "Last updated"  
 date: now
 date-format: long
@@ -63,14 +60,52 @@ Highlights: `r rmarkdown::metadata$highlights`
 <!-- The actual document text starts here: -->
 
 # Introduction
+Ceramics are the most common artifacts unearthed from archaeological sites, offering valuable insights into diverse anthropological facets encompassing cultural, social, and economic dimensions. Foodway is one of the topics that can can explored based on food residues absorbed into the matrices of ceramics. Food residues are useful sources to explore pottery use and past culinary practices. This analytical pursuit heavily relies on contemporary scientific methodologies. For example, organic residues, particularly lipids, extracted from pottery through a series of chemical techniques enable the identification of terrestrial animals, marine resources, and plants [@Evershed2008; @Evershed2002; @Evershed2008marine; @Craig2011; @Heron2016]. Furthermore, the identification of foodstuffs contained in storage vessels can be achieved through ancient DNA analysis, providing direct evidence of pottery content at the genes or species levels [@Foley2012; @Hansson2008; @Robinson2017]. These analytical approaches underscore the significance of preserving the condition of food residues within archaeological contexts, ensuring the efficacy of these scientific methodologies.
 
-Here is a citation [@Marwick2017]
+Recently, the application of next-generation sequencing in microbiology has brought a novel biomolecular approach to examine ancient human activity through microorganisms present in archaeological samples, including human remains [@Cano2000; @Ubaldi1998; @Ckimsis2023], teeth [@Adler2013; @Warinner2015; @De2013; @Preus2011], archaeological deposits, and minerals [@Margesin2017; @Siles2018; @Lenehan2017; @Boivin2023]. Such microbial archaeology could also be useful for studying food residues adhering to or absorbed into pottery matrix. Based on the assumption that food spoilage mainly results from microbial activity, the microorganisms preserved in pottery within burial contexts could be related to the last prehistoric use of the pot, such as food that was cooked in it. For example, microorganisms including *Proteus spp.*, *Weissella spp.*, *Pseudomonas spp.*, and *Enterobacteriaceae* are frequently associated with meat [@Tassew2010; @Stellato2016], while *Aspergillus spp.*, *Penicillium spp.*, *Fusarium spp.*, *Rhizopus spp.* are commonly found in association with rice [@Li2022; @Bertuzzi2019; @Tahir2012]. Moreover, *Acetobacter*, *Lactobacillus*, *Bacillus*, *Bifidobacterium* are indicative of fermented foods [@Tamang2016; @Xiao2020; @Zhang2018], and *Paenibacillus*, *Chryseobacterium* are largely found in mixed rice-vegetable meals [@Helmond2017; @Nde2021]. Given the potential widespread occurrence of microbial communities across various food categories, more studies are still needed to understand the characteristics of microbial communities in ancient pottery. 
+
+In this study, our objective is to investigate the feasibility of using microbial communities as indicators of past food processing in pottery through a comparative analysis of different parts of ceramic samples. We aim to answer the research question is: Can microbial compositions serve as evidence for distinguishing various food categories based on the prevalence of spoilage microorganisms? Our hypothesis is that the microbial composition in absorbed residues within the pottery matrix will exhibit distinctions relevant to food residues when compared to those on the surface of pottery and in surrounding soils. While microorganisms offer indirect evidence of past food practices, our focus is on their potential to provide valuable information that complements existing scientific approaches to analyzing food residues. This innovative perspective sheds light on food practices from a microbial perspective that has not been fully discussed in archaeology. 
 
 # Background
 
+
+
 # Methods
 
+Microbial DNA extraction for 20 samples (Power soil toolkit)
+Focus on bacterial, archaeal and fungal communities
+Primer selection for target regions (100-300 bp): 
+16S rRNA gene (V1, V4, V6) 
+18S rRNA gene (ITS1)
+Amplification with PCR
+Gel running and collecting the bands of regions
+Illumina amplicon sequencing
+
+Amplicons of V1, V4, and V6 of 16S and ITS1 of ITS1.  
+
+
 # Results
+
+Alpha diversity 
+Beta diversity
+Relative abundance 
+Venn diagrams
+The abundant taxa at ASV level & the abundant taxa at genus level
+
+Questions:
+
+1. Abundance and relative abundance? Proportion of the general microbial communities across different types of analysis. Richness and Shanon analysis
+2. What should I focus on heatmap? those high frequencies? targets? or based on tree? 
+3. How to deal with control sets? Subtract? 
+4. What is the correction between V1, V4, V6 of 16S according to abundance and taxonomy?
+5. Phylogentic-based analysis, phylogenic tree?
+6. the distribution of microbiome across different groups of samples?
+
+ANOVA
+normal distribution
+standard deviation 
+Kristall_willis
+
 
 <!-- Here's some example analysis code: -->
 
@@ -98,6 +133,11 @@ x <- round(pi, 2)
 Here is an example of inline code `r x` in the middle of a sentence.
 
 # Discussion
+
+There are significant differences in the richness and diversity of bacterial and archaeal communities across the four groups: soil > exterior potsherds > interior potsherds > control
+Some microbial groups are significantly more abundant in pottery samples, such as Weissella, Escherichia Shigella, Paenibacillus, and Chryseobacterium, and Penicillium
+V4 and V6 regions are more ideal for determining the microorganisms in archaeological materials compared with V1 and ITS1 regions 
+
 
 # Conclusion
 
