@@ -39,6 +39,9 @@ OTU_V1 <- read.table(here::here("analysis","data","raw_data","V1_asv_table.txt")
 OTU_V6 <- read.table(here::here("analysis","data","raw_data","V6_asv_table.txt"), header = T, sep="\t")
 OTU_ITS1 <- read.table(here::here("analysis","data","raw_data","ITS1_asv_table.txt"), header = T, sep="\t")
 
+check <- OTU_ITS1 %>%
+  select(OTU.ID, taxonomy)
+
 # function to get reads only with ASVs as row names
 reads_only <- function(OTU) {
   OTU_df <- OTU %>%
