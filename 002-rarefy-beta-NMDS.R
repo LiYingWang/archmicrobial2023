@@ -63,10 +63,12 @@ V6_pot_perm <- adonis2(rarefy_V6_reads_only ~ group, data = rarefy_V6_meta_join)
 ITS1_pot_perm <- adonis2(rarefy_ITS1_reads_only ~ group, data = rarefy_ITS1_meta_join)
 
 # Non-metric Multidimensional Scaling (NMDS): collapse all species axes into 2 to visualize the differences between samples
+library(vegan3d)
+library(viridis)
 V4_NMDS <- metaMDS(rarefy_V4_reads_only)
 V1_NMDS <- metaMDS(rarefy_V1_reads_only)
 V6_NMDS <- metaMDS(rarefy_V6_reads_only)
-ITS1_NMDS <- metaMDS(rarefy_ITS1_reads_only)
+ITS1_NMDS <- metaMDS(rarefy_ITS1_reads_only) # k value refers to numbers of dimension
 stressplot(ITS1_NMDS)
 plot(ITS1_NMDS)
 
@@ -87,12 +89,12 @@ NMDS_df_all <- rbind(V1_plot_NMDS_df, V4_plot_NMDS_df, V6_plot_NMDS_df, ITS1_plo
 # NMDS plots
 nmds_plot_all <-
   ggplot(NMDS_df_all,
-         aes(x = NMDS1, y = NMDS2, color = group, shape = group)) +
-  geom_point(size = 3, alpha = 0.8) +
-  stat_ellipse(linetype = 2, size = 1) +
-  labs(title = "NMDS") +
-  scale_color_discrete(name = "Sample group",
-                      labels = c("control", "pot-interior", "pot-exterior", "soil")) +
+         aes(x = NMDS1, y = NMDS2, color = group, shape = group)) + #color = group
+  geom_point(size = 2.5, alpha = 0.9) +
+  #stat_ellipse(linetype = 2, size = 1) +
+  #scale_color_discrete(name = "Sample group",
+                     # labels = c("control", "pot-interior", "pot-exterior", "soil")) +
+  scale_colour_viridis_d(option = "magma", begin= 0.1, end= 0.8, direction = -1) +
   scale_shape_discrete(name = "Sample group",
                        labels = c("control", "pot-interior", "pot-exterior", "soil")) +
   theme_minimal() +
@@ -104,7 +106,28 @@ nmds_plot_all <-
 ggsave(here::here("analysis", "figures", "03-NMDS-plot.png"),
        width = 10, height = 8, units = "in")
 
-# How do species contribute to the dissimilarity of communities? It takes an hour
+# check 3D NMDS
+ITS1_NMDS <- metaMDS(rarefy_ITS1_reads_only, k=3)
+ITS1_NMDS_3D <-scores(ITS1_NMDS, choices = 1:3, display = c("sites"))
+ITS1_3D_plot <- ordiplot3d(ITS1_NMDS_3D, col = "red", ax.col= "black", pch = 18)
+text(ITS1_3D_plot$xyz.convert(ITS1_NMDS_3D), rownames(ITS1_NMDS_3D), pos=1)
+
+V1_NMDS <- metaMDS(rarefy_V1_reads_only, k=3)
+V1_NMDS_3D <-scores(V1_NMDS, choices = 1:3, display = c("sites"))
+V1_3D_plot <- ordiplot3d(V1_NMDS_3D, col = "red", ax.col= "black", pch = 18)
+text(V1_3D_plot$xyz.convert(V1_NMDS_3D), rownames(V1_NMDS_3D), pos=1)
+
+V4_NMDS <- metaMDS(rarefy_V4_reads_only, k=3)
+V4_NMDS_3D <-scores(V4_NMDS, choices = 1:3, display = c("sites"))
+V4_3D_plot <- ordiplot3d(V4_NMDS_3D, col = "red", ax.col= "black", pch = 18)
+text(V4_3D_plot$xyz.convert(V4_NMDS_3D), rownames(V4_NMDS_3D), pos=1)
+
+V6_NMDS <- metaMDS(rarefy_V6_reads_only, k=3)
+V6_NMDS_3D <-scores(V6_NMDS, choices = 1:3, display = c("sites"))
+V6_3D_plot <- ordiplot3d(V6_NMDS_3D, col = "red", ax.col= "black", pch = 18)
+text(V6_3D_plot$xyz.convert(V6_NMDS_3D), rownames(V6_NMDS_3D), pos=1)
+
+# How do species contribute to the dissimilarity of communities? It takes an hour, seems no need
 # fit <- envfit(V4_pot_NMDS, rarefy_V4_reads_only, perm = 999) # takes the output of metaMDS() and the species matrix
 # saveRDS(fit, here::here("analysis","data","derived_data","fit.rds"))
 fit <- readRDS(here::here("analysis","data","derived_data","fit.rds"))
