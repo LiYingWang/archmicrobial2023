@@ -91,20 +91,24 @@ nmds_plot_all <-
   ggplot(NMDS_df_all,
          aes(x = NMDS1, y = NMDS2, color = group, shape = group)) + #color = group
   geom_point(size = 2.5, alpha = 0.9) +
-  #stat_ellipse(linetype = 2, size = 1) +
+  #stat_ellipse(linetype = 2, size = 0.3) +
   #scale_color_discrete(name = "Sample group",
                      # labels = c("control", "pot-interior", "pot-exterior", "soil")) +
-  scale_colour_viridis_d(option = "magma", begin= 0.1, end= 0.8, direction = -1) +
+  scale_colour_viridis_d(option = "magma", begin= 0.2, end= 0.8, direction = -1) + #option = "magma"
   scale_shape_discrete(name = "Sample group",
                        labels = c("control", "pot-interior", "pot-exterior", "soil")) +
-  theme_minimal() +
+  scale_shape_manual(values = c(10, 17, 15, 19)) +
+  geom_vline(xintercept = 0, linetype="dashed", color="gray30", size= 0.5) +
+  geom_hline(yintercept = 0, linetype="dashed", color="gray30", size= 0.5) +
   facet_wrap(~Region, scales = "free") +
+  scale_x_continuous(expand = c(0.1, 0)) +
+  scale_y_continuous(expand = c(0.1, 0)) +
   theme_minimal() +
   theme(plot.background = element_rect(fill = "white", colour = "white"),
-        strip.text = element_text(size= 12))
+        strip.text = element_text(size= 12)) #strip.background = element_blank()
 
 ggsave(here::here("analysis", "figures", "03-NMDS-plot.png"),
-       width = 10, height = 8, units = "in")
+       width = 8, height = 6, units = "in")
 
 # check 3D NMDS
 ITS1_NMDS <- metaMDS(rarefy_ITS1_reads_only, k=3)
