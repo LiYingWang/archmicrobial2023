@@ -121,10 +121,10 @@ V6_pcoa_bray_for_plot <- beta_df(V6_bray, V6_meta)
 ITS1_pcoa_bray_for_plot <- beta_df(ITS1_bray, ITS1_meta)
 
 # calculate the proportion of variance in the data explained by the first two PCoA axes
-V4_bray_eig <- round(c(V4_bray$eig[1]/(sum(V4_bray$eig)), V4_bray$eig[2]/(sum(V4_bray$eig))), 4)*100
-V1_bray_eig <- round(c(V1_bray$eig[1]/(sum(V1_bray$eig)), V1_bray$eig[2]/(sum(V1_bray$eig))), 4)*100
-V6_bray_eig <- round(c(V6_bray$eig[1]/(sum(V6_bray$eig)), V6_bray$eig[2]/(sum(V6_bray$eig))), 4)*100
-ITS1_bray_eig <- round(c(ITS1_bray$eig[1]/(sum(ITS1_bray$eig)), ITS1_bray$eig[2]/(sum(ITS1_bray$eig))), 4)*100
+V4_bray_eig <- round(100*V4_bray$eig/sum(V4_bray$eig), 2)
+V1_bray_eig <- round(100*V1_bray$eig/sum(V1_bray$eig), 2)
+V6_bray_eig <- round(100*V6_bray$eig/sum(V6_bray$eig), 2)
+ITS1_bray_eig <- round(100*ITS1_bray$eig/sum(ITS1_bray$eig), 2)
 
 # create a PCoA bray plot
 library(ggrepel)
@@ -152,7 +152,7 @@ ggsave(here::here("analysis", "figures", "PcoA_bray_rare.png"), width = 6.5, hei
 jac_calculate <- function(df){
   #calculate principal coordinates analysis (Bray-Curtis)
   jac <- vegdist(df, dmethod = "jaccard", binary = T)
-  pcoa_jac <- cmdscale(jac, k = 2, eig = T)
+  pcoa_jac <- cmdscale(jac, k = 2, eig = T, add = T) # add to reduce negative values
   return(pcoa_jac)
 }
 
@@ -198,10 +198,15 @@ V6_pcoa_jac_for_plot <- beta_df(V6_jac, V6_meta)
 ITS1_pcoa_jac_for_plot <- beta_df(ITS1_jac, ITS1_meta)
 
 # calculate the proportion of variance in the data explained by the first two PCoA axes
-V4_jac_eig <- c(round(V4_jac$eig[1]/(sum(V4_jac$eig)), 4), round(V4_jac$eig[2]/(sum(V4_jac$eig)), 4)) *100
-V1_jac_eig <- c(round(V1_jac$eig[1]/(sum(V1_jac$eig)), 4), round(V1_jac$eig[2]/(sum(V1_jac$eig)), 4)) *100
-V6_jac_eig <- c(round(V6_jac$eig[1]/(sum(V6_jac$eig)), 4), round(V6_jac$eig[2]/(sum(V6_jac$eig)), 4)) *100
-ITS1_jac_eig <- c(round(ITS1_jac$eig[1]/(sum(ITS1_jac$eig)), 4), round(ITS1_jac$eig[2]/(sum(ITS1_jac$eig)), 4)) *100
+V4_jac_eig <- round(100*V4_jac$eig/sum(V4_jac$eig), 2)
+V1_jac_eig <- round(100*V1_jac$eig/sum(V1_jac$eig), 2)
+V6_jac_eig <- round(100*V6_jac$eig/sum(V6_jac$eig), 2)
+ITS1_jac_eig <- round(100*ITS1_jac$eig/sum(ITS1_jac$eig), 2)
+
+tibble(pe = ITS1_jac_eig,
+       axis = 1:length(ITS1_jac_eig)) %>%
+  ggplot(aes(x=axis, y =pe)) +
+  geom_line()
 
 # create a PCoA jaccard plot
 pcoa_jac_plot <-
@@ -214,7 +219,7 @@ pcoa_jac_plot <-
            hjust = c(-0.2, -0.2, -0.2), vjust = c(1.25, 3, 4.25), parse = T ) +
   scale_colour_viridis_d(option = "magma", begin= 0.1, end= 0.8, direction = -1) + #change color by option = "magma"
   theme_bw() + # theme_bw()
-  labs(x= paste0("PCoA", "(", ITS1_jac_eig[1], "%)"), y= paste0("PCoA", "(", ITS1_jac_eig[2], "%)"),
+  labs(x= paste0("PCoA1", "(", ITS1_jac_eig[1], "%)"), y= paste0("PCoA2", "(", ITS1_jac_eig[2], "%)"),
        title = "Jaccard") +
   theme(plot.background = element_rect(fill = "white", colour = "white"),
         strip.text = element_text(size= 13), legend.position = "none",
