@@ -68,6 +68,12 @@ rich_V1_test  <- richness_test(rarefy_V1_reads_only, V1_meta)
 rich_V6_test  <- richness_test(rarefy_V6_reads_only, V6_meta)
 rich_ITS1_test  <- richness_test(rarefy_ITS1_reads_only, ITS1_meta)
 
+pair_richness_test <- function (df1, df2){
+  rich <- specnumber(df1) # the number of species within each sample
+  pair_rich_aov <- pairwise.t.test(rich ~ group, data =df2, p.adj = "none") # analysis of variance between groups
+  return(c(rich, summary(rich), summary(rich_aov)))
+}
+
 sppdiv_aov_V4 <- aov(diversity(rarefy_V4_reads_only) ~ group, data =V4_meta)
 sppdiv_aov_V1 <- aov(diversity(rarefy_V1_reads_only) ~ group, data =V1_meta)
 sppdiv_aov_V6 <- aov(diversity(rarefy_V6_reads_only) ~ group, data =V6_meta)
@@ -80,7 +86,7 @@ alpha_cal_df <- function(df1, df2){
   evenness <- diversity(df1)/log(specnumber(df1))
   shannon <- diversity(df1, index = "shannon")
   alphadiv <- cbind(df2, t(richness), shannon, evenness) #combine all in one
-  rm(richness, evenness, shannon) #remove the unnecessary data/vector
+  #rm(richness, evenness, shannon) #remove the unnecessary data/vector
   return(alphadiv)
 }
 
@@ -88,6 +94,15 @@ V4_alphadiv <- alpha_cal_df(rarefy_V4_reads_only, V4_meta)
 V1_alphadiv <- alpha_cal_df(rarefy_V1_reads_only, V1_meta)
 V6_alphadiv <- alpha_cal_df(rarefy_V6_reads_only, V6_meta)
 ITS1_alphadiv <- alpha_cal_df(rarefy_ITS1_reads_only, ITS1_meta)
+
+# pairwise t-test on richness and shannon
+library(rstatix)
+rich_pair_V4 <- pairwise_t_test(V4_alphadiv, S.obs ~ group)
+rich_pair_V1 <- pairwise_t_test(V1_alphadiv, S.obs ~ group)
+rich_pair_V6 <- pairwise_t_test(V6_alphadiv, S.obs ~ group)
+rich_pair_ITS1 <- pairwise_t_test(ITS1_alphadiv, S.obs ~ group)
+
+options(scipen = 10, digits = 2)
 
 # function to tidy data for alpha analysis, including richness, chao, evenness, and shannon
 alphadiv_tidy <- function(df){
