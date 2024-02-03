@@ -1,0 +1,189 @@
+---
+title: "Supplementary Materials for Characterization of the microbial and fungal communities in ancient pottery from Neolithic southwestern China"
+author:
+  - Li-Ying Wang:
+      correspondence: "yes"
+      email: liying15@gmail.com
+      orcid: 0000-0001-9060-2125
+      institute:
+        - AS
+  - Kuei-Chen Lin:
+      institute: AS
+      orcid: 0000-0003-1689-0558
+  - Zhiqing Zhou:
+      orcid: 0000-0003-1689-0551
+      institute:
+        - name: Chengdu Institute of Cultural Relics and Archaeology
+  - Yin-Ru Chiang:
+      correspondence: "yes"
+      institute: AS
+      orcid: 0000-0003-1689-0559
+institute:
+  - AS:
+      name: Academia sinica
+      address: 130, Section 2, Academia Rd, Nangang District, Taipei City, Taiwan
+title-block-published: "Last updated"  
+date: now
+date-format: long
+format: 
+  docx:
+    reference-doc: "../templates/template.docx" # Insert path for the DOCX file
+execute:
+  echo: true
+  warning: false
+  message: false
+  comment: "#>"
+  fig-path: "../figures/"
+  fig-dpi: 600
+filters:
+  - ../templates/scholarly-metadata.lua
+  - ../templates/author-info-blocks.lua
+  - ../templates/pagebreak.lua
+csl: "../templates/journal-of-archaeological-science.csl" # Insert path for the bib-style
+---
+
+## Alpha Diversity
+
+```{r get-data}
+#| label: get-data
+#| echo: false
+#| cache: true
+library(tidyverse)
+library(readxl)
+# read rarefied data
+rarefy_V4 <- read.csv(here::here("analysis","data","derived_data", "V4_shared_format.1.subsample.60216.csv"), sep = ",")
+rarefy_V1 <- read.csv(here::here("analysis","data","derived_data","V1_shared_format.1.subsample.13658.csv"), sep = "")
+rarefy_V6 <- read.csv(here::here("analysis","data","derived_data", "V6_shared_format.1.subsample.28402.csv"), sep = ",")
+rarefy_ITS1 <- read.csv(here::here("analysis","data","derived_data", "ITS1_shared_format.1.subsample.387.csv"), sep = ",")
+context <- read_excel(here::here("analysis","data", "raw_data", "GJB_amp_meta.xlsx"))
+```
+
+```{r}
+#| label: alpha-richness
+#| echo: false
+#| cache: true
+library(knitr)
+library(vegan) 
+# to get the same order for all
+rarefy_V4 <- rarefy_V4 %>% mutate(Group = tolower(Group)) %>% arrange(Group)
+rarefy_V1 <- rarefy_V1 %>% mutate(Group = tolower(Group)) %>% arrange(Group)
+rarefy_V6 <- rarefy_V6 %>% mutate(Group = tolower(Group)) %>% arrange(Group)
+rarefy_ITS1 <- rarefy_ITS1 %>% mutate(Group = tolower(Group)) %>% arrange(Group)
+
+# tidy meta data and get the same order as the rarefy data
+context_tidy <-
+  context %>%
+  mutate(`adpater no` = tolower(`adpater no`),
+         type = tolower(str_extract(`adpater no`, "[[:alpha:]]+(?=\\d)")),
+         type = case_when(type == "con" ~ "control", TRUE ~ as.character(type)),
+         area = case_when(area == "inside" ~ "interior", area == "outside" ~ "exterior"),
+         group = if_else(!is.na(area)&!area%in% c("belly", "outside belly"),
+                         paste0(type, "-", area), type),
+         group = factor(group, levels = c("control","pot-interior","pot-exterior","soil"))) %>%
+  arrange(`adpater no`)
+
+# function to have OTU reads only
+reads_only <- function(df) {
+  df %>%
+    select(-label, -Group, -numOtus)
+}
+
+rarefy_V4_reads_only  <- reads_only(rarefy_V4)
+rarefy_V1_reads_only  <- reads_only(rarefy_V1)
+rarefy_V6_reads_only  <- reads_only(rarefy_V6)
+rarefy_ITS1_reads_only  <- reads_only(rarefy_ITS1)
+
+# function to get context for each region
+meta_region <- function(df, region){
+  context_tidy %>%
+    filter(Region == region) %>%
+    arrange(`adpater no`)
+}
+
+V4_meta<- meta_region(context_tidy, "V4")
+V1_meta<- meta_region(context_tidy, "V1")
+V6_meta<- meta_region(context_tidy, "V6")
+ITS1_meta<- meta_region(context_tidy, "ITS1")
+
+# functions calculate richness, Chao1, evenness index, and Shannon index 
+alpha_cal_df <- function(df1, df2){
+  richness <- estimateR(df1)
+  evenness <- diversity(df1)/log(specnumber(df1))
+  shannon <- diversity(df1, index = "shannon")
+  alphadiv <- cbind(df2, t(richness), shannon, evenness) #combine all in one
+  return(alphadiv)
+}
+
+V4_alphadiv <- alpha_cal_df(rarefy_V4_reads_only, V4_meta)
+V1_alphadiv <- alpha_cal_df(rarefy_V1_reads_only, V1_meta)
+V6_alphadiv <- alpha_cal_df(rarefy_V6_reads_only, V6_meta)
+ITS1_alphadiv <- alpha_cal_df(rarefy_ITS1_reads_only, ITS1_meta)
+
+# pairwise t-test on richness
+library(rstatix)
+# no correction for the Type I error rate across the pairwise tests
+rich_pair_V4 <- pairwise_t_test(V4_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+rich_pair_V1 <- pairwise_t_test(V1_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+rich_pair_V6 <- pairwise_t_test(V6_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+rich_pair_ITS1 <- pairwise_t_test(ITS1_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+
+# function to add region name
+rich_pair_region <- function(df, vector) {
+  df %>%
+    mutate(region = vector) %>% 
+    select(region, group1, group2, n1, n2, p, p.signif)
+}
+
+rich_pair_V4 <- rich_pair_region(rich_pair_V4, "V4")
+rich_pair_V1 <- rich_pair_region(rich_pair_V1, "V1")
+rich_pair_V6 <- rich_pair_region(rich_pair_V6, "V6")
+rich_pair_ITS1 <- rich_pair_region(rich_pair_ITS1, "ITS1")
+
+rich_pair_all <-
+  rbind(rich_pair_V1, rich_pair_V4, rich_pair_V6, rich_pair_ITS1)
+
+kable(rich_pair_all , caption = "Table S1: Pairwise comparison of Richness index (the number of observed OTUs) using ANOVA")
+```
+
+
+```{r}
+#| label: alpha-shannon
+#| echo: false
+#| cache: true
+# pairwise t-test on Shannon
+
+shan_pair_V4 <- pairwise_t_test(V4_alphadiv, shannon ~ group, p.adjust.method = 'none')
+shan_pair_V1 <- pairwise_t_test(V1_alphadiv, shannon ~ group, p.adjust.method = 'none')
+shan_pair_V6 <- pairwise_t_test(V6_alphadiv, shannon ~ group, p.adjust.method = 'none')
+shan_pair_ITS1 <- pairwise_t_test(ITS1_alphadiv, shannon ~ group, p.adjust.method = 'none')
+
+# function to add region name
+shan_pair_region <- function(df, vector) {
+  df %>%
+    mutate(region = vector) %>% 
+    select(region, group1, group2, n1, n2, p, p.signif)
+}
+
+shan_pair_V4 <- shan_pair_region(shan_pair_V4, "V4")
+shan_pair_V1 <- shan_pair_region(shan_pair_V1, "V1")
+shan_pair_V6 <- shan_pair_region(shan_pair_V6, "V6")
+shan_pair_ITS1 <- shan_pair_region(shan_pair_ITS1, "ITS1")
+
+shan_pair_all <-
+  rbind(shan_pair_V1, shan_pair_V4, shan_pair_V6, shan_pair_ITS1)
+
+kable(shan_pair_all  , caption = "Table S2: Pairwise comparison of Shannon diversity indices using ANOVA")
+
+
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
