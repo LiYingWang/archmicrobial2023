@@ -71,7 +71,6 @@ registerS3method(
   "knit_print", "integer", knit_print.integer,
   envir = asNamespace("knitr")
 )
-
 ```
 
 # Introduction
@@ -144,6 +143,7 @@ rarefy_V4 <- read.csv(here::here("analysis","data","derived_data", "V4_shared_fo
 rarefy_V1 <- read.csv(here::here("analysis","data","derived_data","V1_shared_format.1.subsample.13658.csv"), sep = "")
 rarefy_V6 <- read.csv(here::here("analysis","data","derived_data", "V6_shared_format.1.subsample.28402.csv"), sep = ",")
 rarefy_ITS1 <- read.csv(here::here("analysis","data","derived_data", "ITS1_shared_format.1.subsample.387.csv"), sep = ",")
+context <- read_excel(here::here("analysis","data", "raw_data", "GJB_amp_meta.xlsx"))
 
 rarefy_reads <- function(df) {
   sum_read <- df %>%
@@ -166,8 +166,91 @@ ITS1_OTU_num <- unique(rarefy_ITS1$numOtus)
 total_OTU <- V4_OTU_num + V1_OTU_num + V6_OTU_num + ITS1_OTU_num
 ```
 
+```{r alpha}
+#| label: alpha
+#| echo: false
+#| cache: true
+library(vegan) 
+# to get the same order for all
+rarefy_V4 <- rarefy_V4 %>% mutate(Group = tolower(Group)) %>% arrange(Group)
+rarefy_V1 <- rarefy_V1 %>% mutate(Group = tolower(Group)) %>% arrange(Group)
+rarefy_V6 <- rarefy_V6 %>% mutate(Group = tolower(Group)) %>% arrange(Group)
+rarefy_ITS1 <- rarefy_ITS1 %>% mutate(Group = tolower(Group)) %>% arrange(Group)
+
+# tidy meta data and get the same order as the rarefy data
+context_tidy <-
+  context %>%
+  mutate(`adpater no` = tolower(`adpater no`),
+         type = tolower(str_extract(`adpater no`, "[[:alpha:]]+(?=\\d)")),
+         type = case_when(type == "con" ~ "control", TRUE ~ as.character(type)),
+         area = case_when(area == "inside" ~ "interior", area == "outside" ~ "exterior"),
+         group = if_else(!is.na(area)&!area%in% c("belly", "outside belly"),
+                         paste0(type, "-", area), type),
+         group = factor(group, levels = c("control","pot-interior","pot-exterior","soil"))) %>%
+  arrange(`adpater no`)
+
+# function to have OTU reads only
+reads_only <- function(df) {
+  df %>%
+    select(-label, -Group, -numOtus)
+}
+
+rarefy_V4_reads_only  <- reads_only(rarefy_V4)
+rarefy_V1_reads_only  <- reads_only(rarefy_V1)
+rarefy_V6_reads_only  <- reads_only(rarefy_V6)
+rarefy_ITS1_reads_only  <- reads_only(rarefy_ITS1)
+
+# function to get context for each region
+meta_region <- function(df, region){
+  context_tidy %>%
+    filter(Region == region) %>%
+    arrange(`adpater no`)
+}
+
+V4_meta<- meta_region(context_tidy, "V4")
+V1_meta<- meta_region(context_tidy, "V1")
+V6_meta<- meta_region(context_tidy, "V6")
+ITS1_meta<- meta_region(context_tidy, "ITS1")
+
+# functions calculate richness, Chao1, evenness index, and Shannon index 
+alpha_cal_df <- function(df1, df2){
+  richness <- estimateR(df1)
+  evenness <- diversity(df1)/log(specnumber(df1))
+  shannon <- diversity(df1, index = "shannon")
+  alphadiv <- cbind(df2, t(richness), shannon, evenness) #combine all in one
+  return(alphadiv)
+}
+
+V4_alphadiv <- alpha_cal_df(rarefy_V4_reads_only, V4_meta)
+V1_alphadiv <- alpha_cal_df(rarefy_V1_reads_only, V1_meta)
+V6_alphadiv <- alpha_cal_df(rarefy_V6_reads_only, V6_meta)
+ITS1_alphadiv <- alpha_cal_df(rarefy_ITS1_reads_only, ITS1_meta)
+
+# pairwise t-test on richness and shannon
+library(rstatix)
+rich_pair_V4 <- pairwise_t_test(V4_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+rich_pair_V1 <- pairwise_t_test(V1_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+rich_pair_V6 <- pairwise_t_test(V6_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+rich_pair_ITS1 <- pairwise_t_test(ITS1_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+
+shan_pair_V4 <- pairwise_t_test(V4_alphadiv, shannon ~ group, p.adjust.method = 'none')
+shan_pair_V1 <- pairwise_t_test(V1_alphadiv, shannon ~ group, p.adjust.method = 'none')
+shan_pair_V6 <- pairwise_t_test(V6_alphadiv, shannon ~ group, p.adjust.method = 'none')
+shan_pair_ITS1 <- pairwise_t_test(ITS1_alphadiv, shannon ~ group, p.adjust.method = 'none')
+
+rich_pv_v4 <- format.pval(pv = rich_pair_V4$p[6], 
+              digits = 2,  # number of digits, but after the 0.0
+              eps = 0.001, # above the number will be replaced  by "<0.0xxx"
+              nsmall = 3) # how much tails 0 to keep 
+
+rich_pv_v1 <- format.pval(pv = rich_pair_V1$p[4], digits = 2, eps = 0.01, nsmall = 2) 
+rich_pv_its1 <- format.pval(pv = rich_pair_ITS1$p[4], digits = 2, eps = 0.05, nsmall = 2)
+shan_pv_v4 <- format.pval(pv = shan_pair_V4$p[2], digits = 2, eps = 0.05, nsmall = 2) 
+shan_pv_v1 <- format.pval(pv = shan_pair_V1$p[2], digits = 2, eps = 0.05, nsmall = 2) 
+```
+
 ## Alpha diversity analysis of bacterial and fungal communities
-Illumina analysis generated a total of `r total_reads` sequences that were normalized to `r rare_reads` after rarefaction [@Schloss2024]. Soil samples have the highest shannon diversity index and richness, followed by pottery exterior samples, and pottery interior samples, and negative control. 
+Illumina analysis generated a total of `r total_reads` sequences that were normalized to `r rare_reads` after rarefaction for comparison across different types of samples [@Schloss2024]. For the V4 and V6 regions, soil samples show a significant higher richness indices based on the number of observed OTUs (p `r rich_pv_v4`) compared with those of exterior pottery samples, interior pottery samples, and negative control samples. Similar patterns were observed for the V1 and ITS1 region, but the richness index differ significantly mainly between soil samples and negative control samples (p `r rich_pv_v1` and `r rich_pv_its1` respectively; Table S1). Although there is no statistically significant differences in richness indices between the two types of pottery samples and negative control, Shannon diversity indices for the V4 and V1 regions are significantly higher from exterior pottery samples than those from negative control samples (p `r shan_pv_v4` and `r shan_pv_v1` respectively; Table S2). 
 
 ## Taxonomic composition 
 
