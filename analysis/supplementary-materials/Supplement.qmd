@@ -119,19 +119,19 @@ V1_alphadiv <- alpha_cal_df(rarefy_V1_reads_only, V1_meta)
 V6_alphadiv <- alpha_cal_df(rarefy_V6_reads_only, V6_meta)
 ITS1_alphadiv <- alpha_cal_df(rarefy_ITS1_reads_only, ITS1_meta)
 
-# pairwise t-test on richness
+# pairwise Wilcoxon rank-sum  on richness and shannon
 library(rstatix)
-# no correction for the Type I error rate across the pairwise tests
-rich_pair_V4 <- pairwise_t_test(V4_alphadiv, S.obs ~ group, p.adjust.method = 'none')
-rich_pair_V1 <- pairwise_t_test(V1_alphadiv, S.obs ~ group, p.adjust.method = 'none')
-rich_pair_V6 <- pairwise_t_test(V6_alphadiv, S.obs ~ group, p.adjust.method = 'none')
-rich_pair_ITS1 <- pairwise_t_test(ITS1_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+
+rich_pair_V4 <- V4_alphadiv %>% pairwise_wilcox_test(S.obs ~ group, p.adjust.method = 'fdr')
+rich_pair_V1 <- V1_alphadiv %>% pairwise_wilcox_test(S.obs ~ group, p.adjust.method = 'fdr')
+rich_pair_V6 <- V6_alphadiv %>% pairwise_wilcox_test(S.obs ~ group, p.adjust.method = 'fdr')
+rich_pair_ITS1 <- ITS1_alphadiv %>% pairwise_wilcox_test(S.obs ~ group, p.adjust.method = 'fdr')
 
 # function to add region name
 rich_pair_region <- function(df, vector) {
   df %>%
     mutate(region = vector) %>% 
-    select(region, group1, group2, n1, n2, p, p.signif)
+    select(region, group1, group2, n1, n2, p, p.adj, p.adj.signif)
 }
 
 rich_pair_V4 <- rich_pair_region(rich_pair_V4, "V4")
@@ -142,7 +142,7 @@ rich_pair_ITS1 <- rich_pair_region(rich_pair_ITS1, "ITS1")
 rich_pair_all <-
   rbind(rich_pair_V1, rich_pair_V4, rich_pair_V6, rich_pair_ITS1)
 
-kable(rich_pair_all , caption = "Table S1: Pairwise comparison of Richness index (the number of observed OTUs) using ANOVA")
+kable(rich_pair_all , caption = "Table S1: Pairwise comparison of Richness index (the number of observed OTUs) using Wilcoxon rank-sum test with FDR-adjusted p-value")
 ```
 
 
@@ -150,18 +150,18 @@ kable(rich_pair_all , caption = "Table S1: Pairwise comparison of Richness index
 #| label: alpha-shannon
 #| echo: false
 #| cache: true
-# pairwise t-test on Shannon
 
-shan_pair_V4 <- pairwise_t_test(V4_alphadiv, shannon ~ group, p.adjust.method = 'none')
-shan_pair_V1 <- pairwise_t_test(V1_alphadiv, shannon ~ group, p.adjust.method = 'none')
-shan_pair_V6 <- pairwise_t_test(V6_alphadiv, shannon ~ group, p.adjust.method = 'none')
-shan_pair_ITS1 <- pairwise_t_test(ITS1_alphadiv, shannon ~ group, p.adjust.method = 'none')
+# pairwise t-test on Shannon
+shan_pair_V4 <- V4_alphadiv %>% pairwise_wilcox_test(shannon ~ group, p.adjust.method = 'fdr')
+shan_pair_V1 <- V1_alphadiv %>% pairwise_wilcox_test(shannon ~ group, p.adjust.method = 'fdr')
+shan_pair_V6 <- V6_alphadiv %>% pairwise_wilcox_test(shannon ~ group, p.adjust.method = 'fdr')
+shan_pair_ITS1 <- ITS1_alphadiv %>% pairwise_wilcox_test(shannon ~ group, p.adjust.method = 'fdr')
 
 # function to add region name
 shan_pair_region <- function(df, vector) {
   df %>%
     mutate(region = vector) %>% 
-    select(region, group1, group2, n1, n2, p, p.signif)
+    select(region, group1, group2, n1, n2, p, p.adj, p.adj.signif)
 }
 
 shan_pair_V4 <- shan_pair_region(shan_pair_V4, "V4")
@@ -172,11 +172,8 @@ shan_pair_ITS1 <- shan_pair_region(shan_pair_ITS1, "ITS1")
 shan_pair_all <-
   rbind(shan_pair_V1, shan_pair_V4, shan_pair_V6, shan_pair_ITS1)
 
-kable(shan_pair_all  , caption = "Table S2: Pairwise comparison of Shannon diversity indices using ANOVA")
-
-
+kable(shan_pair_all  , caption = "Table S2: Pairwise comparison of Shannon diversity indices using Wilcoxon rank-sum test with FDR-adjusted p-value")
 ```
-
 
 ## Including Plots
 
