@@ -20,18 +20,22 @@ context <- context %>%
                          paste0(type, "-", area), type),
          group = case_when(group == "pot-inside"~ "pot-interior",
                            group == "pot-outside"~ "pot-exterior", TRUE ~ as.character(group))) %>%
-  mutate(label = case_when(`adpater no` == "Pot1"~ "pot1\nin", `adpater no` == "Pot2"~ "pot2\nin",
-                           `adpater no` == "Pot3"~ "pot3\nin", `adpater no` == "Pot4"~ "pot4\nin",
-                           `adpater no` == "Pot5"~ "pot5\nin", `adpater no` == "Pot11"~ "pot6\nin",
-                           `adpater no` == "Pot6"~ "pot1\nex", `adpater no` == "Pot7"~ "pot2\nex",
-                           `adpater no` == "Pot8"~ "pot3\nex", `adpater no` == "Pot9"~ "pot4\nex",
-                           `adpater no` == "Pot10"~ "pot5\nex", `adpater no` == "Pot12"~ "pot6\nex",
-                           `adpater no` == "soil4"~ "soil4\nbelly", `adpater no` == "soil5"~ "soil5\nbelly\nex",
+  mutate(label = case_when(`adpater no` == "con1"~ "C1\nblank", `adpater no` == "con2"~ "C2\nblank",
+                           `adpater no` == "Pot1"~ "P1\nGJB", `adpater no` == "Pot2"~ "P2\nGJB",
+                           `adpater no` == "Pot3"~ "P3\nGJB", `adpater no` == "Pot4"~ "P4\nGJB",
+                           `adpater no` == "Pot5"~ "P5\nGJB", `adpater no` == "Pot11"~ "P6\nGS",
+                           `adpater no` == "Pot6"~ "P1\nGJB", `adpater no` == "Pot7"~ "P2\nGJB",
+                           `adpater no` == "Pot8"~ "P3\nGJB", `adpater no` == "Pot9"~ "P4\nGJB",
+                           `adpater no` == "Pot10"~ "P5\nGJB", `adpater no` == "Pot12"~ "P6\nGS",
+                           `adpater no` == "soil1"~ "S1\nGJB", `adpater no` == "soil2"~ "S2\nGJB",
+                           `adpater no` == "soil3"~ "S3\nGJB", `adpater no` == "con3"~ "C3\nPCR",
+                           `adpater no` == "soil4"~ "S4\nGS", `adpater no` == "soil5"~ "S5\nGS",
                            TRUE ~ as.character(`adpater no`))) %>%
   mutate(part = str_extract(label, "(?<=pot[1-9]\n).*"),
          part = factor(part, levels = c("in", "ex")),
          order = str_extract(label, "[1-9]"),
-         type = str_extract(label, "[[:alpha:]]+(?=\\d)"))
+         type = str_extract(label, "[[:alpha:]]+(?=\\d)"),
+         group = factor(group, levels = c("control", "pot-interior", "pot-exterior", "soil")))
 
 # read original count data
 OTU_V4 <- read.table(here::here("analysis","data","raw_data","V4_asv_table.txt"), header = T, sep="\t")
@@ -89,7 +93,9 @@ tax_clean_sep <- function(df){
            Order = ifelse(is.na(Order), "unclassified", Order),
            Family = ifelse(is.na(Family), "unclassified", Family),
            Genus = ifelse(is.na(Genus), "unclassified", Genus),
-           Species = ifelse(is.na(Species), "unclassified", Species))
+           Species = ifelse(is.na(Species), "unclassified", Species)) %>%
+    mutate(Phylum = ifelse(Phylum == "p__WPS_2", "p__Eremiobacterota", Phylum),
+           Phylum = ifelse(Phylum == "p__Deinococcus_Thermus","p__Deinococcus", Phylum))
 }
 
 V4_tax_clean_sep <- tax_clean_sep(V4_tax_clean)
@@ -98,6 +104,16 @@ V6_tax_clean_sep <- tax_clean_sep(V6_tax_clean)
 ITS1_tax_clean_sep <- tax_clean_sep(ITS1_tax_clean)
 
 sum(is.na(V6_tax_clean_sep$Species))
+
+# join tidy reads and taxonomy dataframes
+V4_context <- context %>% filter(Region == "V4")
+OTU_df_V4_original <-
+  OTU_df_V4 %>%
+  left_join(V4_tax_clean_sep) %>%
+  pivot_longer(!c(OTU.ID, Domain, Phylum, Class, Order, Family, Genus, Species),
+               names_to = "adpater no", values_to = "count") %>%
+  mutate(`adpater no` = str_remove(`adpater no`, "V4.")) %>%
+  left_join(V4_context)
 
 # function to transpose the original count table to shared file format (ASVs as columns)
 transpose_OTU <- function(OTU_df) {
