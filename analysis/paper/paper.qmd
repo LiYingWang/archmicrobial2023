@@ -226,33 +226,132 @@ V1_alphadiv <- alpha_cal_df(rarefy_V1_reads_only, V1_meta)
 V6_alphadiv <- alpha_cal_df(rarefy_V6_reads_only, V6_meta)
 ITS1_alphadiv <- alpha_cal_df(rarefy_ITS1_reads_only, ITS1_meta)
 
-# pairwise t-test on richness and shannon
+# pairwise Wilcoxon rank-sum  on richness and shannon
 library(rstatix)
-rich_pair_V4 <- pairwise_t_test(V4_alphadiv, S.obs ~ group, p.adjust.method = 'none')
-rich_pair_V1 <- pairwise_t_test(V1_alphadiv, S.obs ~ group, p.adjust.method = 'none')
-rich_pair_V6 <- pairwise_t_test(V6_alphadiv, S.obs ~ group, p.adjust.method = 'none')
-rich_pair_ITS1 <- pairwise_t_test(ITS1_alphadiv, S.obs ~ group, p.adjust.method = 'none')
+rich_pair_V4 <- V4_alphadiv %>% pairwise_wilcox_test(S.obs ~ group, p.adjust.method = 'fdr')
+rich_pair_V1 <- V1_alphadiv %>% pairwise_wilcox_test(S.obs ~ group, p.adjust.method = 'fdr')
+rich_pair_V6 <- V6_alphadiv %>% pairwise_wilcox_test(S.obs ~ group, p.adjust.method = 'fdr')
+rich_pair_ITS1 <- ITS1_alphadiv %>% pairwise_wilcox_test(S.obs ~ group, p.adjust.method = 'fdr')
 
-shan_pair_V4 <- pairwise_t_test(V4_alphadiv, shannon ~ group, p.adjust.method = 'none')
-shan_pair_V1 <- pairwise_t_test(V1_alphadiv, shannon ~ group, p.adjust.method = 'none')
-shan_pair_V6 <- pairwise_t_test(V6_alphadiv, shannon ~ group, p.adjust.method = 'none')
-shan_pair_ITS1 <- pairwise_t_test(ITS1_alphadiv, shannon ~ group, p.adjust.method = 'none')
-
-rich_pv_v4 <- format.pval(pv = rich_pair_V4$p[6], 
+shan_pair_V4 <- V4_alphadiv %>% pairwise_wilcox_test(shannon ~ group, p.adjust.method = 'fdr')
+shan_pair_V1 <- V1_alphadiv %>% pairwise_wilcox_test(shannon ~ group, p.adjust.method = 'fdr')
+shan_pair_V6 <- V6_alphadiv %>% pairwise_wilcox_test(shannon ~ group, p.adjust.method = 'fdr')
+shan_pair_ITS1 <- ITS1_alphadiv %>% pairwise_wilcox_test(shannon ~ group, p.adjust.method = 'fdr')
+rich_pv_v4 <- format.pval(pv = rich_pair_V4$p.adj[6], 
               digits = 2,  # number of digits, but after the 0.0
-              eps = 0.001, # above the number will be replaced  by "<0.0xxx"
-              nsmall = 3) # how much tails 0 to keep 
+              eps = 0.05, # above the number will be replaced  by "<0.0xxx"
+              nsmall = 2) # how much tails 0 to keep 
 
-rich_pv_v1 <- format.pval(pv = rich_pair_V1$p[4], digits = 2, eps = 0.01, nsmall = 2) 
-rich_pv_its1 <- format.pval(pv = rich_pair_ITS1$p[4], digits = 2, eps = 0.05, nsmall = 2)
-shan_pv_v4 <- format.pval(pv = shan_pair_V4$p[2], digits = 2, eps = 0.05, nsmall = 2) 
-shan_pv_v1 <- format.pval(pv = shan_pair_V1$p[2], digits = 2, eps = 0.05, nsmall = 2) 
+rich_pv_v6 <- format.pval(pv = rich_pair_V6$p.adj[2], digits = 2, eps = 0.05, nsmall = 2) 
+shan_pv_v4 <- format.pval(pv = shan_pair_V4$p[5], digits = 2, eps = 0.05, nsmall = 2) 
 ```
 
 ## Alpha diversity analysis of bacterial and fungal communities
-Illumina analysis generated a total of `r total_reads` sequences that were normalized to `r rare_reads` after rarefaction for comparison across different types of samples [@Schloss2024]. For the V4 and V6 regions, soil samples show a significant higher richness indices based on the number of observed OTUs (p `r rich_pv_v4`) compared with those of exterior pottery samples, interior pottery samples, and negative control samples. Similar patterns were observed for the V1 and ITS1 region, but the richness index differ significantly mainly between soil samples and negative control samples (p `r rich_pv_v1` and `r rich_pv_its1` respectively; Table S1). Although there is no statistically significant differences in richness indices between the two types of pottery samples and negative control, Shannon diversity indices for the V4 and V1 regions are significantly higher from exterior pottery samples than those from negative control samples (p `r shan_pv_v4` and `r shan_pv_v1` respectively; Table S2). 
+Illumina analysis generated a total of `r total_reads` sequences that were normalized to `r rare_reads` after rarefying for comparison across different types of samples [@Schloss2024; @Weiss2017]. Soil samples show a significant higher richness index based on the number of observed OTUs than that of pottery exterior samples and pottery interior samples (p `r rich_pv_v4`) for the the V4 and V6 regions (Table S1). Also, the richness index of pottery exterior samples is significant higher than that of control samples for the V6 region (p `r rich_pv_v6`). The richness index did not differ significantly between samples for the V1 and ITS1 regions. Shannon diversity index shows that soil samples are significantly higher than pottery interior samples (p `r shan_pv_v4`; Table S2). However, there is no statistically significant differences in richness index and Shannon diversity index between the two types of pottery samples and negative control. 
+
+```{r taxa-abundance}
+#| label: taxa-abundance
+#| echo: false
+#| cache: true
+V4_taxa_ab <- read.csv(here::here("analysis","data","derived_data","V4_bac_phyla_rel_ab.csv"))
+V6_taxa_ab <- read.csv(here::here("analysis","data","derived_data","V6_bac_phyla_rel_ab.csv"))
+V4_taxa_all_sample <- 
+  V4_taxa_ab %>%   # OTU_df_V4_original should be ran in 000-tidy-data
+  group_by(label) %>% 
+  mutate(total_phylum_sum = sum(count)) %>% 
+  ungroup() %>% 
+  group_by(Phylum, label) %>% 
+  mutate(each_phylum_sum = sum(count)) %>% 
+  ungroup() %>% 
+  distinct(label, Phylum, total_phylum_sum, each_phylum_sum) %>% 
+  mutate(rel_ab = round(100*each_phylum_sum/total_phylum_sum, 1))
+
+pottery_GJB <-V4_taxa_all_sample %>% filter(!str_detect(label, "pot6")&!str_detect(label, "soil")&!str_detect(label, "con"))
+pottery_GS <-V4_taxa_all_sample %>% filter(str_detect(label, "pot6"))
+Firmi <- pottery_GJB %>% filter(Phylum == "p__Firmicutes")
+Actin <- pottery_GJB %>% filter(Phylum == "p__Actinobacteria")
+Deino <- pottery_GJB %>% filter(Phylum == "p__Deinococcus")
+Prote <- pottery_GJB %>% filter(Phylum == "p__Proteobacteria")
+pot6_Actin <- pottery_GS %>% filter(Phylum == "p__Actinobacteria")
+pot6_Crena <- pottery_GS %>% filter(Phylum == "p__Crenarchaeota")
+
+soil <-V4_taxa_all_sample %>% filter(str_detect(label, "soil"))
+Firmi_soil <- soil %>% filter(Phylum == "p__Firmicutes"& label%in%c("soil1", "soil2", "soil3"))
+Thau_soil <- soil %>% filter(Phylum == "p__Thaumarchaeota"& label%in%c("soil1", "soil2", "soil3"))
+Actin_soil4 <- soil %>% filter(str_detect(label, "soil4") & Phylum == "p__Actinobacteria")
+Actin_soil5 <- soil %>% filter(str_detect(label, "soil5") & Phylum == "p__Actinobacteria")
+Thau_soil4 <- soil %>% filter(str_detect(label, "soil4") & Phylum == "p__Thaumarchaeota")
+Thau_soil5 <- soil %>% filter(str_detect(label, "soil5") & Phylum == "p__Thaumarchaeota")
+
+library(corrr)
+rel_ab_wider <- 
+  V4_taxa_all_sample %>% 
+  select(label, Phylum, each_phylum_sum) %>% #each_phylum_sum, rel_ab
+  pivot_wider(names_from = label, values_from = each_phylum_sum) %>%  
+  select(-Phylum) 
+
+# compute correlation test
+cor_rel_ab <- rel_ab_wider %>%  correlate()
+
+# Pearson correlation test 
+calc_cor_p_value <- function(vec_a, vec_b){
+  cor.test(vec_a, vec_b)$p.value
+}
+p_value_cor <- colpair_map(rel_ab_wider, calc_cor_p_value)
+
+# Wilcoxon rank-sum
+calc_wil_p_value <- function(vec_a, vec_b){
+  wilcox.test(vec_a, vec_b, p.adjust.method = 'fdr')$p.value
+}
+p_value_wil<- colpair_map(rel_ab_wider, calc_wil_p_value)
+
+# GLM
+calc_glm_p_value <- function(vec_a, vec_b){
+  x <- glm(vec_a ~ vec_b, family = poisson)
+  broom::tidy(x)$p.value[2]
+}
+p_value_glm <- colpair_map(rel_ab_wider, calc_glm_p_value)
+
+major_taxa <- function(df, vec1){
+  df %>% 
+  filter(Phylum == vec1) %>% 
+  group_by(label) %>% 
+  mutate(total_sum = sum(count)) %>% 
+  ungroup() %>% 
+  group_by(Class, label) %>% 
+  mutate(each_sum = sum(count)) %>% 
+  ungroup() %>% 
+  distinct(label, Class, total_sum, each_sum) %>% 
+  mutate(rel_ab = round(100*each_sum/total_sum, 1))
+}
+
+V4_Firmi <- major_taxa(V4_taxa_ab, "p__Firmicutes")
+
+Bacilli <- V4_Firmi %>% filter(Class == "c__Bacilli")
+Clost <- V4_Firmi %>% filter(Class == "c__Clostridia")
+Nega <- V4_Firmi %>% filter(Class == "c__Negativicutes")
+
+V4_Actin <- major_taxa(V4_taxa_ab, "p__Actinobacteria")
+V4_Deino <- major_taxa(V4_taxa_ab, "p__Deinococcus")
+V4_Prote <- major_taxa(V4_taxa_ab, "p__Proteobacteria")
+
+
+
+```
 
 ## Taxonomic composition 
+For the V4 region, bacterial composition at the phylum level in pottery interior samples was similar to those of pottery exterior samples and control samples, but slightly different from that of soil samples (@fig-V4-rel-ab). For Guijiabao pottery samples, *Firmicutes* (`r min(Firmi$rel_ab)`- `r max(Firmi$rel_ab)`%) was the most abundant phylum, followed by *Actinobacteria* (`r min(Actin$rel_ab)`- `r max(Actin$rel_ab)`%), *Deinococcus* (`r min(Deino$rel_ab)`- `r max(Deino$rel_ab)`%), and *Proteobacteria* (`r min(Prote$rel_ab)`- `r max(Prote$rel_ab)`%). Gaoshan sample is predominated by *Actinobacteria* (`r min(pot6_Actin$rel_ab)`- `r max(pot6_Actin$rel_ab)`%) with the presence of *Crenarchaeota* (`r min(pot6_Crena$rel_ab)`- `r max(pot6_Crena$rel_ab)`%) belonging to archaeal domain that was not found in Guijiabao samples and control samples. Although a different composition of phylum was observed between Guijiabao and Gaoshan samples, the difference is not statistically significant. The soil samples from Guijiabao is predominated by *Firmicutes* (`r min(Firmi_soil$rel_ab)`- `r max(Firmi_soil$rel_ab)`%) and *Thaumarchaeota* (`r min(Thau_soil$rel_ab)`- `r max(Thau_soil$rel_ab)`%) belonging to the archaeal domain, while soil samples from Gaoshan is predominated by *Actinobacteria* (`r Actin_soil4$rel_ab`- `r Actin_soil5$rel_ab`%) with less abundant *Thaumarchaeota* (`r Thau_soil4$rel_ab`- `r Thau_soil5$rel_ab`%). The dominant classes include *Bacilli*, *Clostridia* and *Negativicutes* among *Firmicutes*; *Actinobacteria*, *Rubrobacteria*, *Thermoleophilia* among *Actinobacteria*, *Deinococci* in *Deinococcus*, and *Gammaproteobacteria*, *Alphaproteobacteria*, and *Deltaproteobacteria* among *Proteobacteria*. 
+
+
+```{r}
+#| label: fig-V4-rel-ab
+#| echo: false
+#| cache: true
+#| fig-cap: "The taxonomic composition of bacterial communities for the V4 region of pottery, soil, and control samples at the genus level."
+library(here)
+knitr::include_graphics(here("analysis", "figures", "03_rel_ab_V4.png"))
+```
+
 
 ## Beta diversity analysis
 
@@ -276,26 +375,6 @@ ANOVA
 normal distribution
 standard deviation 
 Kristall_willis
-
-
-<!-- Here's some example analysis code: -->
-
-
-```{r}
-#| label: fig-demo-plot
-#| fig-cap: "A plot of random numbers"
-plot(rnorm(10))
-```
-
-@fig-demo-plot shows how we can have a caption and cross-reference for a plot. Note that figure label and cross-references must both be prefixed with `fig-`
-
-```{r}
-#| label: demo-inline-code
-#| echo: false
-x <- round(pi, 2)
-```
-
-Here is an example of inline code `r x` in the middle of a sentence.
 
 # Discussion
 
