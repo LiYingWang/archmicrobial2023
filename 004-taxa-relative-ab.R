@@ -31,7 +31,7 @@ tax_rarefy_df <- function(df1, df2, df3){
     select(-label, -numOtus) %>%
     left_join(df2, by = c("Group"= "adpater no")) %>% #V4_context
     arrange(type, part, order) %>%
-    mutate(label = factor(label, levels = label)) %>%
+    #mutate(label = factor(label, levels = label)) %>%
     select(-Group, -area, -Region) %>%
     pivot_longer(!c(sample, label, type, group, site, part, order), names_to = "name", values_to = "count") %>%
     left_join(df3, by = c("name"= "OTU.ID")) %>% #V4_tax_clean_sep
@@ -110,9 +110,10 @@ phylum_colors_rel_mod3<- c("#D9D9D9","#FDAE61","#FFED6F","#BC80BD","#80B1D3","#D
                            "#B3DE69","#8DD3C7","#BEBADA","#CCEBC5","#FCCDE5","#DFC27D") # for ITS1
 
 # V4 relative abundance plot (top ones are others and unclassified)
-V6_bac_phyla_rel_ab <- # region number can be replaced
-  V6_tax_rarefy_df %>%
-  mutate(Phylum = ifelse(!Phylum%in% V6_Phylum_group, "others", Phylum)) %>%
+V4_bac_phyla_rel_ab <- # region number can be replaced
+  V4_tax_rarefy_df %>%
+  #mutate(type = case_when(type == "con" ~ "control", type == "pot" ~ "pottery", TRUE ~ "Other"))
+  mutate(Phylum = ifelse(!Phylum%in% V4_Phylum_group, "others", Phylum)) %>%
   mutate(Taxonomy = ifelse(Domain == "unclassified" & Phylum == "unclassified"|
                            Domain == "k__Bacteria"& Phylum == "unclassified"|
                            Domain == "k__Archaea" & Phylum == "unclassified",
@@ -121,11 +122,13 @@ V6_bac_phyla_rel_ab <- # region number can be replaced
                               Taxonomy == "k__Archaea; others" ~ "others", TRUE ~ as.character(Taxonomy))) %>%
   ggplot(aes(x = label, y = count, fill = Taxonomy)) +
   geom_bar(stat="identity", position = position_fill(reverse = TRUE), width = 0.8) + #"stack" shows original count; # fill
-  scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(values = rev(phylum_colors_rel_mod2)) + #breaks = V4_Phylum_group_order
+  scale_y_continuous(labels = scales::percent, expand = c(0.01, 0.01)) +
+  scale_fill_manual(values = rev(phylum_colors_rel_mod)) + #breaks = V4_Phylum_group_order
   guides(fill = guide_legend(title = "Taxonomy (phylum level)")) +
   labs(x = NULL, y = "Relative Abundance") +
-  facet_grid(~type, scale= "free", space = "free")
+  theme(panel.background = element_blank(),
+        panel.border = element_blank()) +
+  facet_grid(~group, scale= "free", space = "free")
 
 # export the df before plotting
 write.csv(V6_bac_phyla_rel_ab,
@@ -133,7 +136,7 @@ write.csv(V6_bac_phyla_rel_ab,
                      row.names = FALSE)
 
 library(Cairo)
-CairoPNG(here::here("analysis","figures","03_rel_ab_V4.png"), width = 9, height = 4, dpi = 360, units = "in")
+CairoPNG(here::here("analysis","figures","03_rel_ab_V4.png"), width = 10, height = 4, dpi = 360, units = "in")
 V4_bac_phyla_rel_ab
 dev.off()
 
