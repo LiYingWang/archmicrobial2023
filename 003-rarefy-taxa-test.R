@@ -48,6 +48,7 @@ meta_region_extract <- function(filename, vec){
            pot = case_when(group == "pot-inside" ~ "interior", group == "pot-outside" ~"exterior"),
            potex_soil = case_when(group == "pot-outside" ~ "pot-exterior", type== "soil" ~ "soil"),
            potin_soil = case_when(group == "pot-inside" ~ "pot-interior", type== "soil" ~ "soil"),
+           pot_soil = case_when(type== "pot" ~ "pot", type== "soil" ~ "soil"),
            pot_con = case_when(type== "pot" ~ "pot", type== "con" ~ "control"),
            potex_con = case_when(group == "pot-outside" ~ "pot-exterior", type== "con" ~ "control"),
            potin_con = case_when(group == "pot-inside" ~ "pot-interior", type== "con" ~ "control")) %>%
@@ -81,11 +82,11 @@ composite_ITS1 <- composite_region(shared_ITS1_rarefy, taxonomy_ITS1, metadata_I
 sig_genera_V4 <-
   composite_V4 %>%
   nest(data = -taxonomy) %>% #c(-taxonomy, -otu)
-  mutate(test = map(.x= data, ~wilcox.test(rel_abund~  pot_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  mutate(test = map(.x= data, ~wilcox.test(rel_abund~ potin_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
-  filter(p.value < 0.1)
-  #mutate(p.adjust = p.adjust(p.value, method="BH")) %>% #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6099145/
-  #filter(p.adjust < 0.01) %>%
+  filter(p.value < 0.05)
+  #mutate(p.adjust = p.adjust(p.value, method="fdr")) %>% #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6099145/
+  #filter(p.adjust < 0.1)
   #select(taxonomy, p.adjust)
 
 sig_genera_V1 <-
@@ -145,12 +146,131 @@ composite_V4_plot <-
   theme(axis.text.y = element_markdown())
 
 # pairwise wilcox test
-pairwise.wilcox.test(composite_V4$rel_abund, composite_V4$group, p.adjust.method = "BH")
+pairwise.wilcox.test(composite_V4$rel_abund, composite_V4$group, p.adjust.method = "fdr")
 
 multi_sig_genera <-
   composite_V4 %>%
-  nest(data = -taxonomy) %>% #c(-taxonomy, -otu)
+  nest(data = -taxonomy) %>% # c(-taxonomy, -otu)
   mutate(test = map(.x=data, ~pairwise.wilcox.test(.x$rel_abund, .x$group, exact = FALSE) %>%  tidy)) %>%
   unnest(test) %>%
   filter(p.value < 0.05) %>%
   filter(group2=="pot-inside", group1=="pot-outside")
+
+# function to separate the taxonomy data, also in 000-tidy-data
+tax_clean_sep <- function(df){
+  df %>%
+    separate(taxonomy,
+             into = c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep=";") %>%
+    mutate(Phylum = str_trim(Phylum), Class = str_trim(Class), Order = str_trim(Order),
+           Family = str_trim(Family), Genus = str_trim(Genus), Species = str_trim(Species)) %>%
+    mutate(Domain = ifelse(Domain == "Unassigned", "unclassified", Domain),
+           Phylum = ifelse(is.na(Phylum), "unclassified", Phylum),
+           Class = ifelse(is.na(Class), "unclassified", Class),
+           Order = ifelse(is.na(Order), "unclassified", Order),
+           Family = ifelse(is.na(Family), "unclassified", Family),
+           Genus = ifelse(is.na(Genus), "unclassified", Genus),
+           Species = ifelse(is.na(Species), "unclassified", Species)) %>%
+    mutate(Phylum = ifelse(Phylum == "p__WPS_2", "p__Eremiobacterota", Phylum),
+           Phylum = ifelse(Phylum == "p__Deinococcus_Thermus","p__Deinococcus", Phylum))
+}
+
+composite_V4_sep <- tax_clean_sep(composite_V4)
+
+# function for adding up relative abundance based on different level
+composite_V4_sep_genera <- function(df, col){ # col= Family, Genus etc.
+  df %>%
+    group_by(Group, {{col}}) %>%
+    mutate(total_genera_sum = sum(rel_abund)) %>%
+    ungroup() %>%
+    distinct(Group, {{col}}, group, total_genera_sum, pot_con, pot,
+             potex_con, potin_con, potin_soil, potex_soil, pot_soil)
+}
+
+composite_V4_sep_family <- composite_V4_sep_genera(composite_V4_sep, Family)
+composite_V4_sep_genus <- composite_V4_sep_genera(composite_V4_sep, Genus)
+composite_V4_sep_species <- composite_V4_sep_genera(composite_V4_sep, Species)
+
+# get significant genera at family level between pottery and control
+sig_family_V4 <-
+  composite_V4_sep_family %>%
+  nest(data = -Family) %>%
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot_soil, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  unnest(test) %>%
+  filter(p.value < 0.05)
+
+# get significant genera at family level between pottery
+sig_family_V4_pot <-
+  composite_V4_sep_family %>%
+  nest(data = -Family) %>%
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  unnest(test) %>%
+  filter(p.value < 0.05)
+
+# get significant genera at genus level between pottery and control
+sig_genus_V4 <-
+  composite_V4_sep_genus %>%
+  nest(data = -Genus) %>%
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot_soil, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  unnest(test) %>%
+  filter(p.value < 0.05)
+
+# get significant genera at genus level between pottery
+sig_genus_V4_pot <-
+  composite_V4_sep_genus %>%
+  nest(data = -Genus) %>%
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  unnest(test) %>%
+  filter(p.value < 0.05)
+
+# get significant genera at species level
+sig_species_V4 <-
+  composite_V4_sep_species %>%
+  nest(data = -Species) %>%
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ potex_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  unnest(test) %>%
+  filter(p.value < 0.05)
+
+# plot
+composite_V4_pot_control <-
+  composite_V4_sep_family %>%
+  inner_join(sig_family_V4, by="Family") %>%
+  mutate(Family = str_remove(Family, "f__"),
+         Family = str_replace(Family, "(.*)", "*\\1*")) %>%
+  filter(!is.na(pot_con)) %>%
+  mutate(total_genera_sum = 100 * (total_genera_sum + 1/15000), # make it percentage and add a very small number
+         pot_con = factor(pot_con, levels = c("control", "pot"))) %>%
+  ggplot(aes(x= total_genera_sum, y = Family, fill= pot_con)) +
+  geom_boxplot(aes(fill = pot_con), show.legend = TRUE) +
+  scale_x_log10() +
+  scale_color_manual(NULL,
+                     breaks = c("control", "pot"),
+                     values = c("ivory3", "#238A8DFF"),
+                     labels = c("control", "pottery")) +
+  scale_fill_manual(NULL,
+                    breaks = c("control", "pot"),
+                    values = c("ivory3", "#238A8DFF"),
+                    labels = c("control", "pottery")) +
+  labs(x= "Relative abundance (%)",y= NULL) +
+  theme(axis.text.y = element_markdown())
+
+composite_V4_pot <-
+  composite_V4_sep_family %>%
+  inner_join(sig_family_V4_pot, by="Family") %>%
+  mutate(Family = str_remove(Family, "f__"),
+         Family = str_replace(Family, "(.*)", "*\\1*")) %>%
+  filter(!is.na(pot)) %>%
+  mutate(total_genera_sum = 100 * (total_genera_sum + 1/15000), # make it percentage and add a very small number
+         pot = factor(pot, levels = c("interior", "exterior"))) %>%
+  ggplot(aes(x= total_genera_sum, y = Family, fill= pot)) +
+  geom_boxplot(aes(fill = pot), show.legend = TRUE) +
+  scale_x_log10() +
+  scale_color_manual(NULL,
+                     breaks = c("interior", "exterior"),
+                     values = c("ivory3", "#238A8DFF"),
+                     labels = c("interior", "exterior")) +
+  scale_fill_manual(NULL,
+                    breaks = c("interior", "exterior"),
+                    values = c("ivory3", "#238A8DFF"),
+                    labels = c("interior", "exterior")) +
+  labs(x= "Relative abundance (%)",y= NULL) +
+  theme(axis.text.y = element_markdown())
