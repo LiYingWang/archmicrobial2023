@@ -82,7 +82,7 @@ composite_ITS1 <- composite_region(shared_ITS1_rarefy, taxonomy_ITS1, metadata_I
 sig_genera_V4 <-
   composite_V4 %>%
   nest(data = -taxonomy) %>% #c(-taxonomy, -otu)
-  mutate(test = map(.x= data, ~wilcox.test(rel_abund~ potin_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  mutate(test = map(.x= data, ~wilcox.test(rel_abund~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
   #mutate(p.adjust = p.adjust(p.value, method="fdr")) %>% #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6099145/
@@ -194,7 +194,7 @@ composite_V4_sep_species <- composite_V4_sep_genera(composite_V4_sep, Species)
 sig_family_V4 <-
   composite_V4_sep_family %>%
   nest(data = -Family) %>%
-  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot_soil, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ potex_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
 
@@ -253,24 +253,47 @@ composite_V4_pot_control <-
   labs(x= "Relative abundance (%)",y= NULL) +
   theme(axis.text.y = element_markdown())
 
-composite_V4_pot <-
+sig_family_all <- rbind(sig_family_V4, sig_family_V4_pot)
+sig_family_name <- distinct(sig_family_all, Family)
+
+composite_V4_combine_pot_con <-
   composite_V4_sep_family %>%
-  inner_join(sig_family_V4_pot, by="Family") %>%
+  inner_join(sig_family_name, by = "Family") %>%
   mutate(Family = str_remove(Family, "f__"),
          Family = str_replace(Family, "(.*)", "*\\1*")) %>%
-  filter(!is.na(pot)) %>%
   mutate(total_genera_sum = 100 * (total_genera_sum + 1/15000), # make it percentage and add a very small number
-         pot = factor(pot, levels = c("interior", "exterior"))) %>%
-  ggplot(aes(x= total_genera_sum, y = Family, fill= pot)) +
-  geom_boxplot(aes(fill = pot), show.legend = TRUE) +
+         pot = factor(group, levels = c("con", "pot-inside", "pot-outside", "soil"))) %>%
+  ggplot(aes(x= total_genera_sum, y = Family, fill= group)) +
+  geom_boxplot(aes(fill = group), show.legend = TRUE) +
   scale_x_log10() +
-  scale_color_manual(NULL,
-                     breaks = c("interior", "exterior"),
-                     values = c("ivory3", "#238A8DFF"),
-                     labels = c("interior", "exterior")) +
-  scale_fill_manual(NULL,
-                    breaks = c("interior", "exterior"),
-                    values = c("ivory3", "#238A8DFF"),
-                    labels = c("interior", "exterior")) +
-  labs(x= "Relative abundance (%)",y= NULL) +
+  scale_fill_viridis_d(breaks = c("con", "pot-inside", "pot-outside", "soil"),
+                       labels = c("control","pot-interior", "pot-exterior", "soil"),
+                       direction = -1) +
+  scale_y_discrete(limits=rev) +
+  labs(x= "Relative abundance (%)", y= NULL) +
+  theme_minimal() +
   theme(axis.text.y = element_markdown())
+
+library(patchwork)
+library(cowplot)
+library(png)
+
+# use ggdraw from cowplot to plot the image
+plt1 <- readPNG(here::here("analysis", "figures", "03_rel_ab_V4.png")) %>%
+  cowplot::draw_image()
+
+# get dummy plot
+plt2 <- ggplot2::ggplot() +
+  geom_blank() +
+  theme(aspect.ratio = 4/3)
+
+# combine with patchwork
+plot_combined <- (plt2 + plt1 )/plt1  +
+  plot_layout(heights = c(1, 1)) +
+  plot_annotation(tag_levels = 'A')
+
+# save to png
+ggsave(filename = "plot_combined.png",
+       plot = plot_combined,
+       width = 4,
+       height = 4)
