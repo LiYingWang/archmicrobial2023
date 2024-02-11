@@ -120,11 +120,13 @@ V4_bac_phyla_rel_ab <- # region number can be replaced
                           "unclassified", paste0(Domain,"; ",Phylum))) %>%
   mutate(Taxonomy = case_when(Taxonomy == "k__Bacteria; others" ~ "others",
                               Taxonomy == "k__Archaea; others" ~ "others", TRUE ~ as.character(Taxonomy))) %>%
-  ggplot(aes(x = label, y = count, fill = Taxonomy)) +
-  geom_bar(stat="identity", position = position_fill(reverse = TRUE), width = 0.8) + #"stack" shows original count; # fill
+  ggplot(aes(x = label, y = count, fill = Taxonomy, color = Taxonomy)) +
+  geom_bar(stat="identity", position = position_fill(reverse = TRUE), #"stack" shows original count; # fill
+           width = 0.8, linewidth = 0.1) + # linewidth to reduce the border lines
   scale_y_continuous(labels = scales::percent, expand = c(0.01, 0.01)) +
   scale_fill_manual(values = rev(phylum_colors_rel_mod)) + #breaks = V4_Phylum_group_order
-  guides(fill = guide_legend(title = "Taxonomy (phylum level)")) +
+  scale_color_manual(values = rev(phylum_colors_rel_mod)) +
+  guides(fill = guide_legend(title = "Taxonomy (phylum level)"), color = "none") +
   labs(x = NULL, y = "Relative Abundance") +
   theme(panel.background = element_blank(),
         panel.border = element_blank()) +
