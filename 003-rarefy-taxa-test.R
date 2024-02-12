@@ -272,28 +272,14 @@ composite_V4_combine_pot_con <-
   scale_y_discrete(limits=rev) +
   labs(x= "Relative abundance (%)", y= NULL) +
   theme_minimal() +
-  theme(axis.text.y = element_markdown())
+  theme(axis.text.y = element_markdown(size= 12),
+        legend.title=element_text(size=12),
+        legend.text=element_text(size=12))
 
-library(patchwork)
 library(cowplot)
-library(png)
+V4_rel_sig_taxa_combine <-
+  plot_grid(V4_bac_phyla_rel_ab , composite_V4_combine_pot_con, # run 004-taxa-relative-ab to get the object
+            labels = "AUTO", ncol = 1)
 
-# use ggdraw from cowplot to plot the image
-plt1 <- readPNG(here::here("analysis", "figures", "03_rel_ab_V4.png")) %>%
-  cowplot::draw_image()
-
-# get dummy plot
-plt2 <- ggplot2::ggplot() +
-  geom_blank() +
-  theme(aspect.ratio = 4/3)
-
-# combine with patchwork
-plot_combined <- (plt2 + plt1 )/plt1  +
-  plot_layout(heights = c(1, 1)) +
-  plot_annotation(tag_levels = 'A')
-
-# save to png
-ggsave(filename = "plot_combined.png",
-       plot = plot_combined,
-       width = 4,
-       height = 4)
+ggsave(here::here("analysis","figures","V4_rel_sig_taxa_combine.png"),
+       width = 9.5, height = 7, dpi = 360, units = "in")
