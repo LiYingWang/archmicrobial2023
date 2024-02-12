@@ -129,7 +129,9 @@ V4_bac_phyla_rel_ab <- # region number can be replaced
   guides(fill = guide_legend(title = "Taxonomy (phylum level)"), color = "none") +
   labs(x = NULL, y = "Relative Abundance") +
   theme(panel.background = element_blank(),
-        panel.border = element_blank()) +
+        panel.border = element_blank(),
+        legend.title=element_text(size=11),
+        legend.text=element_text(size=10)) +
   facet_grid(~group, scale= "free", space = "free")
 
 # export the df before plotting
