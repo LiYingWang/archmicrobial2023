@@ -24,6 +24,8 @@ V4_context <- region_context(context, "V4")
 V1_context <- region_context(context, "V1")
 V6_context <- region_context(context, "V6")
 ITS1_context <- region_context(context, "ITS1")
+ITS1_context <- ITS1_context %>%
+  unite("label", c(label, area), na.rm = TRUE, remove = FALSE)
 
 # rarefied taxonomy data with sample name and ASV name
 tax_rarefy_df <- function(df1, df2, df3){
@@ -135,8 +137,8 @@ V4_bac_phyla_rel_ab <- # region number can be replaced
   facet_grid(~group, scale= "free", space = "free")
 
 # export the df before plotting
-write.csv(V6_bac_phyla_rel_ab,
-          here::here("analysis", "data", "derived_data", "V6_bac_phyla_rel_ab.csv"),
+write.csv(V4_bac_phyla_rel_ab,
+          here::here("analysis", "data", "derived_data", "V4_bac_phyla_rel_ab.csv"),
                      row.names = FALSE)
 
 library(Cairo)
@@ -202,6 +204,11 @@ ITS1_bac_phyla_rel_ab <-
   guides(fill = guide_legend(title = "Taxonomy (class level)")) +
   labs(x = NULL, y = "Relative Abundance") +
   facet_grid(~type, scale= "free", space = "free")
+
+# export the df before plotting
+write.csv(ITS1_bac_phyla_rel_ab,
+          here::here("analysis", "data", "derived_data", "ITS1_bac_phyla_rel_ab.csv"),
+          row.names = FALSE)
 
 CairoPNG(here::here("analysis","figures","03_rel_ab_ITS1.png"), width = 9.5, height = 4, dpi = 360, units = "in")
 ITS1_bac_phyla_rel_ab
