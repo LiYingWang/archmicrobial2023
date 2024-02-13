@@ -79,7 +79,7 @@ composite_V6 <- composite_region(shared_V6_rarefy, taxonomy_V6, metadata_V6)
 composite_ITS1 <- composite_region(shared_ITS1_rarefy, taxonomy_ITS1, metadata_ITS1)
 
 # get significant genera
-sig_genera_V4 <-
+sig_genera_V4 <- # replace the region
   composite_V4 %>%
   nest(data = -taxonomy) %>% #c(-taxonomy, -otu)
   mutate(test = map(.x= data, ~wilcox.test(rel_abund~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
@@ -94,7 +94,7 @@ sig_genera_V1 <-
   nest(data = -taxonomy) %>% #c(-taxonomy, -otu)
   mutate(test = map(.x= data, ~wilcox.test(rel_abund~  pot_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
-  filter(p.value < 0.1)
+  filter(p.value < 0.05)
 
 sig_genera_V6 <-
   composite_V6 %>%
@@ -108,7 +108,7 @@ sig_genera_ITS1 <-
   nest(data = -taxonomy) %>% #c(-taxonomy, -otu)
   mutate(test = map(.x= data, ~wilcox.test(rel_abund~  pot_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
-  filter(p.value < 0.1)
+  filter(p.value < 0.05)
 
 # make a plot
 library(ggtext)
@@ -175,9 +175,12 @@ tax_clean_sep <- function(df){
 }
 
 composite_V4_sep <- tax_clean_sep(composite_V4)
+composite_V6_sep <- tax_clean_sep(composite_V6)
+composite_V1_sep <- tax_clean_sep(composite_V1)
+composite_ITS1_sep <- tax_clean_sep(composite_ITS1)
 
 # function for adding up relative abundance based on different level
-composite_V4_sep_genera <- function(df, col){ # col= Family, Genus etc.
+composite_sep_genera <- function(df, col){ # col= Family, Genus etc.
   df %>%
     group_by(Group, {{col}}) %>%
     mutate(total_genera_sum = sum(rel_abund)) %>%
@@ -186,47 +189,56 @@ composite_V4_sep_genera <- function(df, col){ # col= Family, Genus etc.
              potex_con, potin_con, potin_soil, potex_soil, pot_soil)
 }
 
-composite_V4_sep_family <- composite_V4_sep_genera(composite_V4_sep, Family)
-composite_V4_sep_genus <- composite_V4_sep_genera(composite_V4_sep, Genus)
-composite_V4_sep_species <- composite_V4_sep_genera(composite_V4_sep, Species)
+composite_V4_sep_family <- composite_sep_genera(composite_V4_sep, Family)
+composite_V4_sep_genus <- composite_sep_genera(composite_V4_sep, Genus)
+composite_V4_sep_species <- composite_sep_genera(composite_V4_sep, Species)
+composite_V6_sep_family <- composite_sep_genera(composite_V6_sep, Family)
+composite_V6_sep_genus <- composite_sep_genera(composite_V6_sep, Genus)
+composite_V6_sep_species <- composite_sep_genera(composite_V6_sep, Species)
+composite_V1_sep_family <- composite_sep_genera(composite_V1_sep, Family)
+composite_V1_sep_genus <- composite_sep_genera(composite_V1_sep, Genus)
+composite_V1_sep_species <- composite_sep_genera(composite_V1_sep, Species)
+composite_ITS1_sep_family <- composite_sep_genera(composite_ITS1_sep, Family)
+composite_ITS1_sep_genus <- composite_sep_genera(composite_ITS1_sep, Genus)
+composite_ITS1_sep_species <- composite_sep_genera(composite_ITS1_sep, Species)
 
 # get significant genera at family level between pottery and control
-sig_family_V4 <-
-  composite_V4_sep_family %>%
+sig_family_ITS1 <-
+  composite_ITS1_sep_family %>% # replace the region
   nest(data = -Family) %>%
   mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ potex_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
 
 # get significant genera at family level between pottery
-sig_family_V4_pot <-
-  composite_V4_sep_family %>%
+sig_family_ITS1_pot <-
+  composite_ITS1_sep_family %>%
   nest(data = -Family) %>%
   mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
 
 # get significant genera at genus level between pottery and control
-sig_genus_V4 <-
-  composite_V4_sep_genus %>%
+sig_genus_ITS1 <-
+  composite_ITS1_sep_genus %>%
   nest(data = -Genus) %>%
-  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot_soil, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ potin_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
 
 # get significant genera at genus level between pottery
-sig_genus_V4_pot <-
-  composite_V4_sep_genus %>%
+sig_genus_ITS1_pot <-
+  composite_ITS1_sep_genus %>%
   nest(data = -Genus) %>%
   mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
 
 # get significant genera at species level
-sig_species_V4 <-
-  composite_V4_sep_species %>%
+sig_species_ITS1 <-
+  composite_ITS1_sep_species %>%
   nest(data = -Species) %>%
-  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ potex_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
 
