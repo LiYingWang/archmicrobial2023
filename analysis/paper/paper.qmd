@@ -79,7 +79,7 @@ Ceramics are the most common artifacts unearthed from archaeological sites, offe
 
 Recently, the application of next-generation sequencing in microbiology has brought a novel biomolecular approach to examine ancient human activity through microorganisms present in archaeological samples, including human remains [@Cano2000; @Ubaldi1998; @Ckimsis2023], teeth [@Adler2013; @Warinner2015; @De2013; @Preus2011], archaeological deposits, and minerals [@Margesin2017; @Siles2018; @Lenehan2017; @Boivin2023]. Such microbial archaeology could also be useful for studying food residues adhering to or absorbed into pottery matrix. Based on the assumption that food spoilage mainly results from microbial activity, the microorganisms preserved in pottery within burial contexts could be related to the last prehistoric use of the pot, such as food that was cooked in it. For example, microorganisms including *Proteus spp.*, *Weissella spp.*, *Pseudomonas spp.*, and *Enterobacteriaceae* are frequently associated with meat [@Tassew2010; @Stellato2016], while *Aspergillus spp.*, *Penicillium spp.*, *Fusarium spp.*, *Rhizopus spp.* are commonly found in association with rice [@Li2022; @Bertuzzi2019; @Tahir2012]. Moreover, *Acetobacter*, *Lactobacillus*, *Bacillus*, *Bifidobacterium* are indicative of fermented foods [@Tamang2016; @Xiao2020; @Zhang2018], and *Paenibacillus*, *Chryseobacterium* are largely found in mixed rice-vegetable meals [@Helmond2017; @Nde2021]. Given the potential widespread occurrence of microbial communities across various food categories, more studies are still needed to understand the characteristics of microbial communities in ancient pottery. 
 
-In this study, our objective is to investigate the feasibility of using microbial communities as indicators of past food processing in pottery by focusing on the potsherds from the Guijiabao site in southwest China. As a long-term occupation site from Neolithic period to historical period, Guijiabao revealed abundant archaeological assemblages and remaines to explore the adaptation of farming communities in a mountain setting. The post-excavation analysis of Guijiabao is still in progress. This study serves as a pilot study to examine the pottery use from a perspective of microbial archaeology. We aim to explore the differences in overall microbial communities, including bacterial and fungal communities, through a comparative analysis of different parts of ceramic samples and soil samples. Our main research question is: Can microbial compositions serve as evidence for distinguishing various food categories based on the prevalence of spoilage microorganisms? We hypothesized that the microbial composition in absorbed residues within the pottery matrix will exhibit distinctions relevant to food residues when compared to those on the surface of pottery and in surrounding soils. While microorganisms offer indirect evidence of past food practices, our focus is on their potential to provide valuable information that complements existing scientific approaches to analyzing food residues. This innovative perspective could shed light on food practices from a microbial perspective that has not been fully discussed in archaeology. 
+This study serves as a pilot study to investigate the feasibility of using microbial communities as indicators of past food processing in pottery by focusing on the potsherds from the Guijiabao site in southwest China. As a long-term occupation site from Neolithic period to historical period, Guijiabao revealed abundant archaeological assemblages and remains to explore the adaptation of farming communities in a mountain setting. We aim to explore the differences in overall microbial communities, including bacterial and fungal communities, through a comparative analysis of different parts of ceramic samples and soil samples. Our main research question is: Can microbial compositions serve as evidence for distinguishing various food categories based on the prevalence of spoilage microorganisms? We hypothesized that the microbial composition in absorbed residues within the pottery matrix will exhibit distinctions relevant to food residues when compared to those on the surface of pottery and in surrounding soils. We also compared the resolution of V1, V4, and V6 16S rRNA regions to estimate microbial community diversity. While microorganisms offer indirect evidence of past food practices, our focus is on their potential to provide valuable information that complements existing scientific approaches to analyzing food residues. This innovative perspective could shed light on food practices from a microbial perspective that has not been fully discussed in archaeology. 
 
 # Site Description and Sampling
 
@@ -255,6 +255,8 @@ Illumina analysis generated a total of `r total_reads` sequences that were norma
 #| cache: true
 V4_taxa_ab <- read.csv(here::here("analysis","data","derived_data","V4_bac_phyla_rel_ab.csv"))
 V6_taxa_ab <- read.csv(here::here("analysis","data","derived_data","V6_bac_phyla_rel_ab.csv"))
+ITS1_taxa_ab <- read.csv(here::here("analysis","data","derived_data","ITS1_bac_phyla_rel_ab.csv"))
+
 V4_taxa_all_sample <- 
   V4_taxa_ab %>%   # OTU_df_V4_original should be ran in 000-tidy-data
   group_by(label) %>% 
@@ -284,33 +286,30 @@ Thau_soil4 <- soil %>% filter(str_detect(label, "soil4") & Phylum == "p__Thaumar
 Thau_soil5 <- soil %>% filter(str_detect(label, "soil5") & Phylum == "p__Thaumarchaeota")
 
 library(corrr)
-rel_ab_wider <- 
-  V4_taxa_all_sample %>% 
+# function to create a wide dataframe
+rel_ab_wider <- function(df){
+  df %>% 
   select(label, Phylum, each_phylum_sum) %>% #each_phylum_sum, rel_ab
   pivot_wider(names_from = label, values_from = each_phylum_sum) %>%  
   select(-Phylum) 
+}
+
+rel_ab_wider_v4 <- rel_ab_wider(V4_taxa_all_sample)
 
 # compute correlation test
-cor_rel_ab <- rel_ab_wider %>%  correlate()
+cor_rel_ab_v4 <- rel_ab_wider_v4 %>%  correlate()
 
 # Pearson correlation test 
 calc_cor_p_value <- function(vec_a, vec_b){
   cor.test(vec_a, vec_b)$p.value
 }
-p_value_cor <- colpair_map(rel_ab_wider, calc_cor_p_value)
+p_value_cor_v4 <- colpair_map(rel_ab_wider_v4, calc_cor_p_value)
 
 # Wilcoxon rank-sum
 calc_wil_p_value <- function(vec_a, vec_b){
   wilcox.test(vec_a, vec_b, p.adjust.method = 'fdr')$p.value
 }
-p_value_wil<- colpair_map(rel_ab_wider, calc_wil_p_value)
-
-# GLM
-calc_glm_p_value <- function(vec_a, vec_b){
-  x <- glm(vec_a ~ vec_b, family = poisson)
-  broom::tidy(x)$p.value[2]
-}
-p_value_glm <- colpair_map(rel_ab_wider, calc_glm_p_value)
+p_value_wil_v4 <- colpair_map(rel_ab_wider_v4, calc_wil_p_value)
 
 major_taxa <- function(df, vec1){
   df %>% 
@@ -326,31 +325,58 @@ major_taxa <- function(df, vec1){
 }
 
 V4_Firmi <- major_taxa(V4_taxa_ab, "p__Firmicutes")
-
-Bacilli <- V4_Firmi %>% filter(Class == "c__Bacilli")
-Clost <- V4_Firmi %>% filter(Class == "c__Clostridia")
-Nega <- V4_Firmi %>% filter(Class == "c__Negativicutes")
-
 V4_Actin <- major_taxa(V4_taxa_ab, "p__Actinobacteria")
 V4_Deino <- major_taxa(V4_taxa_ab, "p__Deinococcus")
 V4_Prote <- major_taxa(V4_taxa_ab, "p__Proteobacteria")
 
+V6_taxa_all_sample <- 
+  V6_taxa_ab %>%  
+  group_by(label) %>% 
+  mutate(total_phylum_sum = sum(count)) %>% 
+  ungroup() %>% 
+  group_by(Phylum, label) %>% 
+  mutate(each_phylum_sum = sum(count)) %>% 
+  ungroup() %>% 
+  distinct(label, Phylum, total_phylum_sum, each_phylum_sum) %>% 
+  mutate(rel_ab = round(100*each_phylum_sum/total_phylum_sum, 1))
 
+rel_ab_wider_v6 <- rel_ab_wider(V6_taxa_all_sample)
+p_value_wil_v6 <- colpair_map(rel_ab_wider_v6, calc_wil_p_value)
+pottery_v6 <-V6_taxa_all_sample %>% filter(str_detect(label, "pot"))
+Pates <- pottery_v6 %>% filter(Phylum == "p__Patescibacteria")
+V6_Pates <- major_taxa(V6_taxa_ab, "p__Patescibacteria")
+
+ITS1_taxa_all_sample <- 
+  ITS1_taxa_ab %>%  
+  group_by(label) %>% 
+  mutate(total_phylum_sum = sum(count)) %>% 
+  ungroup() %>% 
+  group_by(Phylum, label) %>% 
+  mutate(each_phylum_sum = sum(count)) %>% 
+  ungroup() %>% 
+  distinct(label, Phylum, total_phylum_sum, each_phylum_sum) %>% 
+  mutate(rel_ab = round(100*each_phylum_sum/total_phylum_sum, 1))
+
+rel_ab_wider_its1 <- rel_ab_wider(ITS1_taxa_all_sample)
+p_value_wil_its1 <- colpair_map(rel_ab_wider_its1, calc_wil_p_value)
+Ascom <- ITS1_taxa_all_sample %>% filter(Phylum == "p__Ascomycota")
 
 ```
 
 ## Taxonomic composition 
-For the V4 region, bacterial composition at the phylum level in pottery interior samples was similar to those of pottery exterior samples and control samples, but slightly different from that of soil samples (@fig-V4-rel-ab). For Guijiabao pottery samples, *Firmicutes* (`r min(Firmi$rel_ab)`- `r max(Firmi$rel_ab)`%) was the most abundant phylum, followed by *Actinobacteria* (`r min(Actin$rel_ab)`- `r max(Actin$rel_ab)`%), *Deinococcus* (`r min(Deino$rel_ab)`- `r max(Deino$rel_ab)`%), and *Proteobacteria* (`r min(Prote$rel_ab)`- `r max(Prote$rel_ab)`%). Gaoshan sample is predominated by *Actinobacteria* (`r min(pot6_Actin$rel_ab)`- `r max(pot6_Actin$rel_ab)`%) with the presence of *Crenarchaeota* (`r min(pot6_Crena$rel_ab)`- `r max(pot6_Crena$rel_ab)`%) belonging to archaeal domain that was not found in Guijiabao samples and control samples. Although a different composition of phylum was observed between Guijiabao and Gaoshan samples, the difference is not statistically significant. The soil samples from Guijiabao is predominated by *Firmicutes* (`r min(Firmi_soil$rel_ab)`- `r max(Firmi_soil$rel_ab)`%) and *Thaumarchaeota* (`r min(Thau_soil$rel_ab)`- `r max(Thau_soil$rel_ab)`%) belonging to the archaeal domain, while soil samples from Gaoshan is predominated by *Actinobacteria* (`r Actin_soil4$rel_ab`- `r Actin_soil5$rel_ab`%) with less abundant *Thaumarchaeota* (`r Thau_soil4$rel_ab`- `r Thau_soil5$rel_ab`%). 
+For the V4 region, bacterial composition at the phylum level in pottery interior samples was similar to those of pottery exterior samples and control samples, but slightly different from that of soil samples (@fig-V4-rel-ab: A). For Guijiabao pottery samples, *Firmicutes* (`r min(Firmi$rel_ab)`- `r max(Firmi$rel_ab)`%) was the most abundant phylum, followed by *Actinobacteria* (`r min(Actin$rel_ab)`- `r max(Actin$rel_ab)`%), *Deinococcus* (`r min(Deino$rel_ab)`- `r max(Deino$rel_ab)`%), and *Proteobacteria* (`r min(Prote$rel_ab)`- `r max(Prote$rel_ab)`%). Gaoshan sample is predominated by *Actinobacteria* (`r min(pot6_Actin$rel_ab)`- `r max(pot6_Actin$rel_ab)`%) with the presence of *Crenarchaeota* (`r min(pot6_Crena$rel_ab)`- `r max(pot6_Crena$rel_ab)`%) belonging to archaeal domain that was not found in Guijiabao samples and control samples. Although a different composition of phylum was observed between Guijiabao and Gaoshan samples, the difference is not statistically significant. The soil samples from Guijiabao is predominated by *Firmicutes* (`r min(Firmi_soil$rel_ab)`- `r max(Firmi_soil$rel_ab)`%) and *Thaumarchaeota* (`r min(Thau_soil$rel_ab)`- `r max(Thau_soil$rel_ab)`%) belonging to the archaeal domain, while soil samples from Gaoshan is predominated by *Actinobacteria* (`r Actin_soil4$rel_ab`- `r Actin_soil5$rel_ab`%) with less abundant *Thaumarchaeota* (`r Thau_soil4$rel_ab`- `r Thau_soil5$rel_ab`%). 
 
-The dominant classes include *Bacilli*, *Clostridia*, and *Negativicutes* among *Firmicutes*; *Actinobacteria*, *Rubrobacteria*, *Thermoleophilia* among *Actinobacteria*, *Deinococci* in *Deinococcus*, and *Gammaproteobacteria*, *Alphaproteobacteria*, and *Deltaproteobacteria* among *Proteobacteria*. At the family level, significant differences were observed between pottery exterior samples and control samples, and between pottery exterior and interior samples. *Paenibacillaceae*, *Erysipelotrichaceae*, and *Xiphinematobacteraceae* were more abundant in pottery exterior samples than those in control samples (P <0.05). In addition to *Paenibacillaceae* and *Xiphinematobacteraceae*, *Phycisphaeraceae* was more abundant in pottery exterior samples than in pottery interior samples (P <0.05). At the genus level, pottery exterior samples exhibit significantly higher abundance of *Candidatus_Xiphinematobacter* compared to pottery interior samples and control samples (P < 0.01). Among the bacterial taxa showing significant differences, only *Paenibacillaceae* displayed relative abundances exceeding 10% on average, while others were below 1%.
+The dominant classes include *Bacilli*, *Clostridia*, and *Negativicutes* within *Firmicutes*; *Actinobacteria*, *Rubrobacteria*, *Thermoleophilia* within *Actinobacteria*, *Deinococci* in *Deinococcus*, and *Gammaproteobacteria*, *Alphaproteobacteria*, and *Deltaproteobacteria* within *Proteobacteria*. At the family level, significant differences were observed between pottery exterior samples and control samples, and between pottery exterior and interior samples. *Paenibacillaceae*, *Erysipelotrichaceae*, and *Xiphinematobacteraceae* were more abundant in pottery exterior samples than those in control samples (P <0.05). In addition to *Paenibacillaceae* and *Xiphinematobacteraceae*, *Phycisphaeraceae* was also more abundant in pottery exterior samples than in pottery interior samples (P <0.05). At the genus level, *Candidatus_Xiphinematobacter* was more abundant in pottery exterior samples compared to pottery interior samples and control samples (P <0.01). Among the bacterial taxa showing significant differences, only *Paenibacillaceae* displayed relative abundances exceeding 10% on average, while others were below 1% (@fig-V4-rel-ab: B).
+
+The V6 region has similar bacterial communities at the phylum level as the V4 region across samples, with the exception of *Patescibacteria* (`r min(Pates$rel_ab)`- `r max(Pates$rel_ab)`%) in pottery samples, which was not detected in the reads of the V4 region. The dominant classes within *Patescibacteria* include *Parcubacteria*, *Microgenomatia*, and *Saccharimonadia*. We found a significant difference in the relative abundance of phyla between the pottery interior sample and soil samples from Gaoshan, but none for Guijiabao samples. At the family level, *Paenibacillaceae* was more abundant in pottery exterior samples than in pottery interior samples (P <0.05), while *Sphingomonas* was more abundant in pottery interior samples than in control samples. The bacterial communities at the phylum level for the V1 region are similar to those for the V4 and V6 regions, although there were no significant variations in composition between samples. For the ITS1 region of 18S rRNA, *Ascomycota* (`r min(Firmi$rel_ab)`- `r max(Firmi$rel_ab)`%) and *Basidiomycota* (`r min(Actin$rel_ab)`- `r max(Actin$rel_ab)`%) were the dominant phyla. 
 
 ```{r}
 #| label: fig-V4-rel-ab
 #| echo: false
 #| cache: true
-#| fig-cap: "The taxonomic composition of bacterial communities for the V4 region of pottery, soil, and control samples at the genus level."
+#| fig-cap: "A: The taxonomic composition of bacterial communities for the V4 region of pottery, soil, and control samples at the genus level. B: Bacterial communities at the family level differed significantly in relative abundance between pottery exterior and control samples, and between pottery exterior and interior samples."
 library(here)
-knitr::include_graphics(here("analysis", "figures", "03_rel_ab_V4.png"))
+knitr::include_graphics(here("analysis", "figures", "V4_rel_sig_taxa_combine.png"))
 ```
 
 
