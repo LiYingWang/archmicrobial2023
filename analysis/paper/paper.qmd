@@ -359,7 +359,10 @@ ITS1_taxa_all_sample <-
 
 rel_ab_wider_its1 <- rel_ab_wider(ITS1_taxa_all_sample)
 p_value_wil_its1 <- colpair_map(rel_ab_wider_its1, calc_wil_p_value)
-Ascom <- ITS1_taxa_all_sample %>% filter(Phylum == "p__Ascomycota")
+Ascom_GJB <- ITS1_taxa_all_sample %>% filter(str_detect(label, "GJB") & Phylum == "p__Ascomycota")
+Ascom_GS <- ITS1_taxa_all_sample %>% filter(str_detect(label, "GS") & Phylum == "p__Ascomycota")
+Basid_GJB <- ITS1_taxa_all_sample %>% filter(str_detect(label, "GJB") & Phylum == "p__Basidiomycota")
+Basid_GS <- ITS1_taxa_all_sample %>% filter(str_detect(label, "GS") & Phylum == "p__Basidiomycota")
 
 ```
 
@@ -368,8 +371,7 @@ For the V4 region, bacterial composition at the phylum level in pottery interior
 
 The dominant classes include *Bacilli*, *Clostridia*, and *Negativicutes* within *Firmicutes*; *Actinobacteria*, *Rubrobacteria*, *Thermoleophilia* within *Actinobacteria*, *Deinococci* in *Deinococcus*, and *Gammaproteobacteria*, *Alphaproteobacteria*, and *Deltaproteobacteria* within *Proteobacteria*. At the family level, significant differences were observed between pottery exterior samples and control samples, and between pottery exterior and interior samples. *Paenibacillaceae*, *Erysipelotrichaceae*, and *Xiphinematobacteraceae* were more abundant in pottery exterior samples than those in control samples (P <0.05). In addition to *Paenibacillaceae* and *Xiphinematobacteraceae*, *Phycisphaeraceae* was also more abundant in pottery exterior samples than in pottery interior samples (P <0.05). At the genus level, *Candidatus_Xiphinematobacter* was more abundant in pottery exterior samples compared to pottery interior samples and control samples (P <0.01). Among the bacterial taxa showing significant differences, only *Paenibacillaceae* displayed relative abundances exceeding 10% on average, while others were below 1% (@fig-V4-rel-ab: B).
 
-The V6 region has similar bacterial communities at the phylum level as the V4 region across samples, with the exception of *Patescibacteria* (`r min(Pates$rel_ab)`- `r max(Pates$rel_ab)`%) in pottery samples, which was not detected in the reads of the V4 region. The dominant classes within *Patescibacteria* include *Parcubacteria*, *Microgenomatia*, and *Saccharimonadia*. We found a significant difference in the relative abundance of phyla between the pottery interior sample and soil samples from Gaoshan, but none for Guijiabao samples. At the family level, *Paenibacillaceae* was more abundant in pottery exterior samples than in pottery interior samples (P <0.05), while *Sphingomonas* was more abundant in pottery interior samples than in control samples. The bacterial communities at the phylum level for the V1 region are similar to those for the V4 and V6 regions, although there were no significant variations in composition between samples. For the ITS1 region of 18S rRNA, *Ascomycota* (`r min(Firmi$rel_ab)`- `r max(Firmi$rel_ab)`%) and *Basidiomycota* (`r min(Actin$rel_ab)`- `r max(Actin$rel_ab)`%) were the dominant phyla. 
-
+The V6 region has similar bacterial communities at the phylum level as the V4 region across samples, with the exception of *Patescibacteria* (`r min(Pates$rel_ab)`- `r max(Pates$rel_ab)`%) in pottery samples, which was not detected in the reads of the V4 region. The dominant classes within *Patescibacteria* include *Parcubacteria*, *Microgenomatia*, and *Saccharimonadia*. We found a significant difference in the relative abundance of phyla between the pottery interior sample and soil samples from Gaoshan, but none for Guijiabao samples. At the family level, *Paenibacillaceae* was more abundant in pottery exterior samples than in pottery interior samples (P <0.05), while *Sphingomonas* was more abundant in pottery interior samples than in control samples. V1 and ITS1 regions have higher proportions of unidentified reads than V4 and V6 regions. The bacterial communities at the phylum level for the V1 region are similar to those for the V4 and V6 regions, although there were no significant variations in composition between samples. For the ITS1 region of 18S rRNA, fungal communities at the phylum level were predominated by *Ascomycota* (`r min(Ascom_GJB$rel_ab)`- `r max(Ascom_GJB$rel_ab)`% for Guijiabao samples and `r min(Ascom_GS$rel_ab)`- `r max(Ascom_GS$rel_ab)`% for Gaoshan samples) and *Basidiomycota* (`r min(Basid_GJB$rel_ab)`- `r max(Basid_GJB$rel_ab)`% for Guijiabao samples and `r min(Basid_GS$rel_ab)`- `r max(Basid_GS$rel_ab)`% for Gaoshan samples. 
 ```{r}
 #| label: fig-V4-rel-ab
 #| echo: false
@@ -379,9 +381,7 @@ library(here)
 knitr::include_graphics(here("analysis", "figures", "V4_rel_sig_taxa_combine.png"))
 ```
 
-
 ## Beta diversity analysis
-
 
 Alpha diversity 
 Beta diversity
