@@ -30,9 +30,12 @@ context_tidy <-
                            `adpater no` == "pot10"~ "pot5-ex", `adpater no` == "pot12"~ "pot6-ex",
                            `adpater no` == "soil4"~ "soil4-belly", `adpater no` == "soil5"~ "soil5-belly\nex",
                            TRUE ~ as.character(`adpater no`))) %>%
-  mutate(order = str_extract(label, "[1-9]"),
-         area = factor(area, levels = c("interior", "exterior"))) %>%
-  arrange(`adpater no`)
+  mutate(potex_soil = case_when(group == "pot-exterior" ~ "pot-exterior", type== "soil" ~ "soil"),
+         potin_soil = case_when(group == "pot-interior" ~ "pot-interior", type== "soil" ~ "soil"),
+         pot_soil = case_when(type== "pot" ~ "pot", type== "soil" ~ "soil"),
+         pot_con = case_when(type== "pot" ~ "pot", type== "control" ~ "control"),
+         potex_con = case_when(group == "pot-exterior" ~ "pot-exterior", type== "control" ~ "control"),
+         potin_con = case_when(group == "pot-interior" ~ "pot-interior", type== "control" ~ "control"))
 
 V4_meta<- filter(context_tidy, Region == "V4")
 V1_meta<- filter(context_tidy, Region == "V1")
@@ -71,10 +74,15 @@ V1_bray_dist <- vegdist(rarefy_V1_clean_wider, dmethod = "bray")
 V6_bray_dist <- vegdist(rarefy_V6_clean_wider, dmethod = "bray")
 ITS1_bray_dist <- vegdist(rarefy_ITS1_clean_wider, dmethod = "bray")
 
-V4_bray_perm <- adonis2(V4_bray_dist  ~ group, data = V4_meta, permutations = 1000)
-V1_bray_perm <- adonis2(V1_bray_dist  ~ group, data = V1_meta, permutations = 1000)
-V6_bray_perm <- adonis2(V6_bray_dist  ~ group, data = V6_meta, permutations = 1000)
-ITS1_bray_perm <- adonis2(ITS1_bray_dist  ~ group, data = ITS1_meta, permutations = 1000)
+library(pairwiseAdonis)
+V4_bray_perm <- adonis2(V4_bray_dist ~ group, data = V4_meta, permutations = 1000)
+V4_bray_perm_pair <- pairwise.adonis(V4_bray_dist, V4_meta$group)
+V1_bray_perm <- adonis2(V1_bray_dist ~ group, data = V1_meta, permutations = 1000)
+V1_bray_perm_pair <- pairwise.adonis(V1_bray_dist, V1_meta$group)
+V6_bray_perm <- adonis2(V6_bray_dist ~ group, data = V6_meta, permutations = 1000)
+V6_bray_perm_pair <- pairwise.adonis(V6_bray_dist, V6_meta$group)
+ITS1_bray_perm <- adonis2(ITS1_bray_dist ~ group, data = ITS1_meta, permutations = 1000)
+ITS1_bray_perm_pair <- pairwise.adonis(ITS1_bray_dist, ITS1_meta$group)
 
 V4_pv_bray <- c(format(round(V4_bray_perm$R2[1], 2), nsamll= 2), round(V4_bray_perm$`Pr(>F)`[1], 3))
 V1_pv_bray <- c(format(round(V1_bray_perm$R2[1], 2), nsamll= 2), ceiling(V1_bray_perm$`Pr(>F)`[1]*2)/20)
