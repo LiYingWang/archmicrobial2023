@@ -176,9 +176,13 @@ V6_jac_dist <- vegdist(rarefy_V6_clean_wider, dmethod = "jaccard")
 ITS1_jac_dist <- vegdist(rarefy_ITS1_clean_wider, dmethod = "jaccard")
 
 V4_jac_perm <- adonis2(V4_jac_dist  ~ group, data = V4_meta, permutations = 1000)
+V4_jac_perm_pair <- pairwise.adonis(V4_jac_dist, V4_meta$group)
 V1_jac_perm <- adonis2(V1_jac_dist  ~ group, data = V1_meta, permutations = 1000)
+V1_jac_perm_pair <- pairwise.adonis(V1_jac_dist, V1_meta$group)
 V6_jac_perm <- adonis2(V6_jac_dist  ~ group, data = V6_meta, permutations = 1000)
+V6_jac_perm_pair <- pairwise.adonis(V6_jac_dist, V6_meta$group)
 ITS1_jac_perm <- adonis2(ITS1_jac_dist  ~ group, data = ITS1_meta, permutations = 1000)
+ITS1_jac_perm_pair <- pairwise.adonis(ITS1_jac_dist, ITS1_meta$group)
 
 V4_pv_jac <- c(format(round(V4_jac_perm$R2[1], 2), nsamll =2), round(V4_jac_perm$`Pr(>F)`[1], 3))
 V1_pv_jac <- c(format(round(V1_jac_perm$R2[1], 2), nsamll =2), ceiling(V1_bray_perm$`Pr(>F)`[1]*2)/20)
