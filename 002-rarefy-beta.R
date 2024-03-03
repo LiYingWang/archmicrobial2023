@@ -36,6 +36,7 @@ context_tidy <-
          pot_con = case_when(type== "pot" ~ "pot", type== "control" ~ "control"),
          potex_con = case_when(group == "pot-exterior" ~ "pot-exterior", type== "control" ~ "control"),
          potin_con = case_when(group == "pot-interior" ~ "pot-interior", type== "control" ~ "control")) %>%
+  mutate(site = case_when(site == "GJB" ~ "Guijiabao", site == "CDG" ~ "Gaoshan", TRUE ~ site)) %>%
   mutate(order = parse_number(label))
 
 V4_meta<- filter(context_tidy, Region == "V4") %>% arrange(`adpater no`)
@@ -144,9 +145,9 @@ ITS1_bray_eig <- round(100*ITS1_bray$eig/sum(ITS1_bray$eig), 2)
 # create a PCoA bray plot
 library(ggrepel)
 library(ggtext)
-pcoa_bray_plot <-
+V4_pcoa_bray_plot <-
   V4_pcoa_bray_for_plot %>%
-  ggplot(aes(x= axis_1, y= axis_2, color= group)) +
+  ggplot(aes(x= axis_1, y= axis_2, color= group, shape = site)) +
   geom_point(size= 3) +
   geom_text_repel(aes(label = order), size = 3.5,  hjust = 2,
                   min.segment.length = 0.2, show.legend = FALSE) +
@@ -161,7 +162,22 @@ pcoa_bray_plot <-
         legend.text=element_text(size=rel(1.2)),
         strip.text.x = element_text(size=4),strip.text.y = element_text(size=4))
 
-ggsave(here::here("analysis", "figures", "PcoA_bray_rare.png"), width = 6.5, height = 4.5, units = "in")
+V6_pcoa_bray_plot <-
+  V6_pcoa_bray_for_plot %>%
+  ggplot(aes(x= axis_1, y= axis_2, color= group, shape = site)) +
+  geom_point(size= 3) +
+  geom_text_repel(aes(label = order), size = 3.5,  hjust = 2,
+                  min.segment.length = 0.2, show.legend = FALSE) +
+  annotate("text", -Inf, Inf, label = paste(c("italic(R)^2==" , "P<", "F=="), V6_pv_bray),
+           hjust = c(-0.2, -0.2, -0.2), vjust = c(1.25, 3, 4.25), parse = T ) +
+  scale_colour_viridis_d(option = "magma", begin= 0.1, end= 0.8, direction = -1) + #change color by option = "magma"
+  theme_bw() + # theme_bw()
+  labs(x= paste0("PCoA", "(", V6_bray_eig[1], "%)"), y= paste0("PCoA", "(", V6_bray_eig[2], "%)"),
+       title = "Bray-Curtis") +
+  theme(plot.background = element_rect(fill = "white", colour = "white"),
+        strip.text = element_text(size= 13), legend.title=element_text(size=rel(1.2)),
+        legend.text=element_text(size=rel(1.2)),
+        strip.text.x = element_text(size=4),strip.text.y = element_text(size=4))
 
 # calculate Jaccard dissimilarity - distance matrix for presence/absence
 jac_calculate <- function(df){
@@ -235,9 +251,9 @@ tibble(pe = ITS1_jac_eig,
   geom_line()
 
 # create a PCoA jaccard plot
-pcoa_jac_plot <-
+V4_pcoa_jac_plot <-
   V4_pcoa_jac_for_plot %>%
-  ggplot(aes(x= axis_1, y= axis_2, color= group)) +
+  ggplot(aes(x= axis_1, y= axis_2, color= group, shape = site)) +
   geom_point(size= 3) +
   geom_text_repel(aes(label = order), size = 3.5,  hjust = 2,
                   min.segment.length = 0.2, show.legend = FALSE) +
@@ -253,16 +269,32 @@ pcoa_jac_plot <-
 
 ggsave(here::here("analysis", "figures", "PcoA_jac_rare.png"), width = 6, height = 4.5, units = "in")
 
+V6_pcoa_jac_plot <-
+  V6_pcoa_jac_for_plot %>%
+  ggplot(aes(x= axis_1, y= axis_2, color= group, shape = site)) +
+  geom_point(size= 3) +
+  geom_text_repel(aes(label = order), size = 3.5,  hjust = 2,
+                  min.segment.length = 0.2, show.legend = FALSE) +
+  annotate("text", -Inf, Inf, label = paste(c("italic(R)^2==" , "P<", "F=="), V6_pv_jac),
+           hjust = c(-0.2, -0.2, -0.2), vjust = c(1.25, 3, 4.25), parse = T ) +
+  scale_colour_viridis_d(option = "magma", begin= 0.1, end= 0.8, direction = -1) + #change color by option = "magma"
+  theme_bw() + # theme_bw()
+  labs(x= paste0("PCoA1", "(", V6_jac_eig[1], "%)"), y= paste0("PCoA2", "(", V6_jac_eig[2], "%)"),
+       title = "Jaccard") +
+  theme(plot.background = element_rect(fill = "white", colour = "white"),
+        strip.text = element_text(size= 13), legend.position = "none",
+        strip.text.x = element_text(size=4), strip.text.y = element_text(size=4))
+
 # combine two plots
 library(cowplot)
-beta_di <-
-  plot_grid(pcoa_jac_plot, pcoa_bray_plot, rel_widths = c(0.75, 1),
-            labels = c('A', 'B'), label_size = 12)
+beta_di <- plot_grid(V4_pcoa_jac_plot, V4_pcoa_bray_plot,
+                     V6_pcoa_jac_plot, V6_pcoa_bray_plot,
+                     labels = c("A", "", "B", ""),
+                     rel_widths = c(0.75, 1), ncol =2, label_size = 12)
 
-ggsave(here::here("analysis", "figures", "V4_PcoA_plots.png"), width = 11, height = 4, units = "in")
+ggsave(here::here("analysis", "figures", "V4_V6_combine_PcoA.png"), width = 11, height = 8, units = "in")
 
 # get the percentage of contribution of ASV to the Bray-Curtis dissimilarity
 #simper_result <- simper_modify(rarefy_V4_clean_wider, V4_meta$`adpater no`, permutations = 999)
 #saveRDS(simper_result, here::here("analysis", "data", "derived_data", "simper_result.rds"))
 simper_result <- readRDS(here::here("analysis", "data", "derived_data", "simper_result.rds"))
-
