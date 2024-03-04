@@ -24,8 +24,8 @@ V4_context <- region_context(context, "V4")
 V1_context <- region_context(context, "V1")
 V6_context <- region_context(context, "V6")
 ITS1_context <- region_context(context, "ITS1")
-ITS1_context <- ITS1_context %>%
-  unite("label", c(label, area), na.rm = TRUE, remove = FALSE)
+#ITS1_context <- ITS1_context %>%
+  #unite("label", c(label, area), na.rm = TRUE, remove = FALSE)
 
 # rarefied taxonomy data with sample name and ASV name
 tax_rarefy_df <- function(df1, df2, df3){
@@ -122,7 +122,7 @@ V4_bac_phyla_rel_ab <- # region number can be replaced
                           "unclassified", paste0(Domain,"; ",Phylum))) %>%
   mutate(Taxonomy = case_when(Taxonomy == "k__Bacteria; others" ~ "others",
                               Taxonomy == "k__Archaea; others" ~ "others", TRUE ~ as.character(Taxonomy))) %>%
-  ggplot(aes(x = label, y = count, fill = Taxonomy, color = Taxonomy)) +
+  ggplot(aes(x = label, y = count, fill = Taxonomy, color = Taxonomy)) + #set color to make border invisible
   geom_bar(stat="identity", position = position_fill(reverse = TRUE), #"stack" shows original count; # fill
            width = 0.8, linewidth = 0.1) + # linewidth to reduce the border lines
   scale_y_continuous(labels = scales::percent, expand = c(0.01, 0.01)) +
@@ -136,15 +136,12 @@ V4_bac_phyla_rel_ab <- # region number can be replaced
         legend.text=element_text(size=10)) +
   facet_grid(~group, scale= "free", space = "free")
 
+ggsave(here::here("analysis","figures","03_rel_ab_V4.png"), width = 10, height = 3.5, dpi = 360, units = "in")
+
 # export the df before plotting
 write.csv(V4_bac_phyla_rel_ab,
           here::here("analysis", "data", "derived_data", "V4_bac_phyla_rel_ab.csv"),
                      row.names = FALSE)
-
-library(Cairo)
-CairoPNG(here::here("analysis","figures","03_rel_ab_V4.png"), width = 10, height = 4, dpi = 360, units = "in")
-V4_bac_phyla_rel_ab
-dev.off()
 
 # V1 relative abundance plot (top ones are others and unclassified)
 V1_bac_phyla_rel_ab <-
@@ -156,17 +153,16 @@ V1_bac_phyla_rel_ab <-
   mutate(Taxonomy = case_when(Domain == "k__Archaea" & Phylum == "unclassified" ~ "others",
                               Taxonomy == "k__Bacteria; others" ~ "others",
                               Taxonomy == "k__Archaea; others" ~ "others", TRUE ~ as.character(Taxonomy))) %>%
-  ggplot(aes(x = label, y = count, fill = Taxonomy)) +
-  geom_bar(stat="identity", position = position_fill(reverse = TRUE), width = 0.8) +
-  scale_y_continuous(labels = scales::percent) +
+  ggplot(aes(x = label, y = count, fill = Taxonomy, color = Taxonomy)) +
+  geom_bar(stat="identity", position = position_fill(reverse = TRUE), width = 0.8, linewidth = 0.1) +
+  scale_y_continuous(labels = scales::percent, expand = c(0.01, 0.01)) +
   scale_fill_manual(values = rev(phylum_colors_rel_mod[c(1:3, 5:7, 9:10)])) +
-  guides(fill = guide_legend(title = "Taxonomy (phylum level)")) +
+  scale_color_manual(values = rev(phylum_colors_rel_mod[c(1:3, 5:7, 9:10)])) +
+  guides(fill = guide_legend(title = "Taxonomy (phylum level)"), color = "none") +
   labs(x = NULL, y = "Relative Abundance") +
-  facet_grid(~type, scale= "free", space = "free")
+  facet_grid(~group, scale= "free", space = "free")
 
-CairoPNG(here::here("analysis","figures", "03_rel_ab_V1.png"), width = 9, height = 4, dpi = 360, units = "in")
-V1_bac_phyla_rel_ab
-dev.off()
+ggsave(here::here("analysis","figures","03_rel_ab_V1.png"), width = 10, height = 3.5, dpi = 360, units = "in")
 
 # V6 relative abundance plot (top ones are others and unclassified)
 V6_bac_phyla_rel_ab <-
@@ -178,17 +174,16 @@ V6_bac_phyla_rel_ab <-
                            "unclassified", paste0(Domain,"; ",Phylum))) %>%
   mutate(Taxonomy = case_when(Taxonomy == "k__Bacteria; others" ~ "others",
                               Taxonomy == "k__Archaea; others" ~ "others", TRUE ~ as.character(Taxonomy))) %>%
-  ggplot(aes(x = label, y = count, fill = Taxonomy)) +
-  geom_bar(stat="identity", position = position_fill(reverse = TRUE), width = 0.8) + #"stack" shows original count; # fill
-  scale_y_continuous(labels = scales::percent) +
+  ggplot(aes(x = label, y = count, fill = Taxonomy, color = Taxonomy)) +
+  geom_bar(stat="identity", position = position_fill(reverse = TRUE), width = 0.8, linewidth = 0.1) +
+  scale_y_continuous(labels = scales::percent, expand = c(0.01, 0.01)) +
   scale_fill_manual(values = rev(phylum_colors_rel_mod2)) +
-  guides(fill = guide_legend(title = "Taxonomy (phylum level)")) +
+  scale_color_manual(values = rev(phylum_colors_rel_mod2)) +
+  guides(fill = guide_legend(title = "Taxonomy (phylum level)"), color = "none") +
   labs(x = NULL, y = "Relative Abundance") +
-  facet_grid(~type, scale= "free", space = "free")
+  facet_grid(~group, scale= "free", space = "free")
 
-CairoPNG(here::here("analysis","figures","03_rel_ab_V6.png"), width = 9, height = 4, dpi = 360, units = "in")
-V6_bac_phyla_rel_ab
-dev.off()
+ggsave(here::here("analysis","figures","03_rel_ab_V6.png"), width = 10, height = 3.5, dpi = 360, units = "in")
 
 # ITS1 relative abundance plot (top ones are others and unclassified)
 ITS1_bac_phyla_rel_ab <-
@@ -197,19 +192,27 @@ ITS1_bac_phyla_rel_ab <-
   mutate(Taxonomy = case_when(Domain == "unclassified" & Phylum == "unclassified" & Class == "unclassified" ~ "unclassified",
                               Domain == "k__Fungi" & Phylum == "unclassified" & Class == "unclassified" ~ "unclassified",
                               TRUE ~ as.character(paste0(Phylum,"; ", Class)))) %>%
-  ggplot(aes(x = label, y = count, fill = Taxonomy)) +
-  geom_bar(stat="identity", position = position_fill(reverse = TRUE), width = 0.8) + #"stack" shows original count; # fill
-  scale_y_continuous(labels = scales::percent) +
+  ggplot(aes(x = label, y = count, fill = Taxonomy, color = Taxonomy)) +
+  geom_bar(stat="identity", position = position_fill(reverse = TRUE), width = 0.8, linewidth = 0.1) +
+  scale_y_continuous(labels = scales::percent, expand = c(0.01, 0.01)) +
   scale_fill_manual(values = rev(phylum_colors_rel_mod3)) +
-  guides(fill = guide_legend(title = "Taxonomy (class level)")) +
+  scale_color_manual(values = rev(phylum_colors_rel_mod3)) +
+  guides(fill = guide_legend(title = "Taxonomy (phylum and class level)"), color = "none") +
   labs(x = NULL, y = "Relative Abundance") +
-  facet_grid(~type, scale= "free", space = "free")
+  facet_grid(~group, scale= "free", space = "free")
+
+ggsave(here::here("analysis","figures","03_rel_ab_ITS1.png"), width = 10, height = 3.5, dpi = 360, units = "in")
 
 # export the df before plotting
 write.csv(ITS1_bac_phyla_rel_ab,
           here::here("analysis", "data", "derived_data", "ITS1_bac_phyla_rel_ab.csv"),
           row.names = FALSE)
 
-CairoPNG(here::here("analysis","figures","03_rel_ab_ITS1.png"), width = 9.5, height = 4, dpi = 360, units = "in")
-ITS1_bac_phyla_rel_ab
-dev.off()
+library(cowplot)
+all_rel_ab_combine <-
+  plot_grid(V4_bac_phyla_rel_ab, V6_bac_phyla_rel_ab,
+            V1_bac_phyla_rel_ab, ITS1_bac_phyla_rel_ab,
+            labels = "AUTO", ncol = 1)
+
+ggsave(here::here("analysis","figures","all_rel_ab_combine.png"),
+       width = 10, height = 14, dpi = 360, units = "in")
