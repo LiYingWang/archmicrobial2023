@@ -101,7 +101,7 @@ sig_genera_V6 <-
   nest(data = -taxonomy) %>% #c(-taxonomy, -otu)
   mutate(test = map(.x= data, ~wilcox.test(rel_abund~  pot_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
-  filter(p.value < 0.1)
+  filter(p.value < 0.05)
 
 sig_genera_ITS1 <-
   composite_ITS1 %>%
@@ -203,18 +203,18 @@ composite_ITS1_sep_genus <- composite_sep_genera(composite_ITS1_sep, Genus)
 composite_ITS1_sep_species <- composite_sep_genera(composite_ITS1_sep, Species)
 
 # get significant genera at family level between pottery and control
-sig_family_ITS1 <-
-  composite_ITS1_sep_family %>% # replace the region
+sig_family_V4 <-
+  composite_V4_sep_family %>% # replace the region
   nest(data = -Family) %>%
   mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ potex_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
 
 # get significant genera at family level between pottery
-sig_family_ITS1_pot <-
-  composite_ITS1_sep_family %>%
+sig_family_V6_pot <-
+  composite_V6_sep_family %>%
   nest(data = -Family) %>%
-  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ potin_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
 
@@ -287,6 +287,9 @@ composite_V4_combine_pot_con <-
   theme(axis.text.y = element_markdown(size= 12),
         legend.title=element_text(size=12),
         legend.text=element_text(size=12))
+
+ggsave(here::here("analysis","figures","V4_rel_sig_taxa_combine.png"),
+       width = 9.5, height = 7, dpi = 360, units = "in")
 
 library(cowplot)
 V4_rel_sig_taxa_combine <-
