@@ -519,38 +519,53 @@ sig_genus_V4_pot <-
   nest(data = -Genus) %>%
   mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
-  filter(p.value < 0.05)
+  filter(p.value < 0.05) %>% 
+  filter(!Genus == "unclassified")
 
-V4_sig_family_all <- rbind(sig_family_V4_potex_con, sig_family_V4_pot)
-V4_sig_family_name <- distinct(V4_sig_family_all, Family)
+V4_sig_family_all <- rbind(sig_family_V4_potex_con, sig_family_V4_pot) %>% slice(1,2,5)
 
-composite_V4_combine_pot_con <-
+# join the original data of significance test 
+composite_V4_genus_for_plot <-
+  composite_V4_sep_genus %>%
+  inner_join(sig_genus_V4_pot, by = "Genus") %>%
+  mutate(Genus = str_remove(Genus, "g__")) %>% 
+  rename(Taxon = Genus)
+
+composite_V4_family_for_plot <-
   composite_V4_sep_family %>%
-  inner_join(V4_sig_family_name, by = "Family") %>%
-  mutate(Family = str_remove(Family, "f__"),
-         Family = str_replace(Family, "(.*)", "*\\1*")) %>%
+  inner_join(V4_sig_family_all, by = "Family") %>%
+  mutate(Family = str_remove(Family, "f__")) %>% 
+  rename(Taxon = Family)
+
+# V4 plot
+library(ggtext)
+composite_V4_family_genus_com_plot <-
+  rbind(composite_V4_genus_for_plot, composite_V4_family_for_plot) %>%
+  mutate(Taxon = str_replace(Taxon, "(.*)", "*\\1*"),
+         Taxon = str_replace(Taxon, "\\*Candidatus_(.*)\\*", "Candidatus<br>*\\1*")) %>%
   mutate(total_genera_sum = 100 * (total_genera_sum + 1/15000), # make it percentage and add a very small number
          pot = factor(group, levels = c("con", "pot-inside", "pot-outside", "soil"))) %>%
-  ggplot(aes(x= total_genera_sum, y = Family, fill= group)) +
+  ggplot(aes(x= total_genera_sum, y = Taxon, fill= group)) +
   geom_boxplot(aes(fill = group), color = "gray60", show.legend = TRUE) +
   scale_x_log10() +
   scale_fill_viridis_d(breaks = c("con", "pot-inside", "pot-outside", "soil"),
-                       labels = c("control","pot-interior", "pot-exterior", "soil"),
-                       direction = -1) +
+                       labels = c("control","pot-interior", "pot-exterior", "soil"), direction = -1) +
   scale_y_discrete(limits=rev) +
   labs(x= "Relative abundance (%)", y= NULL) +
   theme_minimal() +
-  theme(axis.text.y = element_markdown(size= 12),
-        legend.title=element_text(size=12),
-        legend.text=element_text(size=12))
-
-ggsave(here::here("analysis","figures","V4_rel_sig_taxa_combine.png"),
-       width = 9.5, height = 7, dpi = 360, units = "in")
+  theme(axis.text.y = element_markdown(size= 12), legend.position = "none")
 
 sig_family_V6_pot <-
   composite_V6_sep_family %>% # replace the region
   nest(data = -Family) %>%
   mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ pot, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
+  unnest(test) %>%
+  filter(p.value < 0.05)
+
+sig_family_V6_potin_con <-
+  composite_V6_sep_family %>% # replace the region
+  nest(data = -Family) %>%
+  mutate(test = map(.x= data, ~wilcox.test(total_genera_sum~ potin_con, data=.x, exact = FALSE) %>% tidy)) %>% #run broom first
   unnest(test) %>%
   filter(p.value < 0.05)
 
@@ -561,18 +576,28 @@ sig_genus_V6_potin_con <-
   unnest(test) %>%
   filter(p.value < 0.05)
 
-V6_sig_family_all <- rbind(sig_family_V6_pot, sig_family_V6_potin_con, sig_family_V6_potex_con)
-V6_sig_family_name <- distinct(V6_sig_family_all, Family)
-V6_sig_genus_name <- sig_genus_V6_potin_con$Genus
+V6_sig_family_all <- rbind(sig_family_V6_pot, sig_family_V6_potin_con) %>% slice(1:2)
 
-composite_V6_combine_pot_con <-
+# join the original data of significance test 
+composite_V6_genus_for_plot <-
   composite_V6_sep_genus %>%
   inner_join(sig_genus_V6_potin_con, by = "Genus") %>%
-  mutate(Genus = str_remove(Genus, "g__"),
-         Genus = str_replace(Genus, "(.*)", "*\\1*")) %>%
+  mutate(Genus = str_remove(Genus, "g__")) %>% 
+  rename(Taxon = Genus)
+
+composite_V6_family_for_plot <-
+  composite_V6_sep_family %>%
+  inner_join(V6_sig_family_all, by = "Family") %>%
+  mutate(Family = str_remove(Family, "f__")) %>% 
+  rename(Taxon = Family)
+
+# V6 plot
+composite_V6_family_genus_com_plot <-
+  rbind(composite_V6_genus_for_plot, composite_V6_family_for_plot) %>%
+  mutate(Taxon = str_replace(Taxon, "(.*)", "*\\1*")) %>%
   mutate(total_genera_sum = 100 * (total_genera_sum + 1/15000), # make it percentage and add a very small number
          pot = factor(group, levels = c("con", "pot-inside", "pot-outside", "soil"))) %>%
-  ggplot(aes(x= total_genera_sum, y = Genus, fill= group)) +
+  ggplot(aes(x= total_genera_sum, y = Taxon, fill= group)) +
   geom_boxplot(aes(fill = group), color = "gray60", show.legend = TRUE) +
   scale_x_log10() +
   scale_fill_viridis_d(breaks = c("con", "pot-inside", "pot-outside", "soil"),
@@ -585,23 +610,34 @@ composite_V6_combine_pot_con <-
         legend.title=element_text(size=12),
         legend.text=element_text(size=12))
 
+library(cowplot)
+V4_V6_rel_sig_taxa_combine <-
+  plot_grid(composite_V4_family_genus_com_plot, composite_V6_family_genus_com_plot, rel_widths = c(0.8, 1), labels = "AUTO", ncol = 2)
+
+ggsave(here::here("analysis","figures","V4_V6_rel_sig_taxa_combine.png"),
+       width = 10, height = 4, dpi = 360, units = "in")
 ```
 
-The dominant classes include *Bacilli*, *Clostridia*, and *Negativicutes* within *Firmicutes*; *Actinobacteria*, *Rubrobacteria*, *Thermoleophilia* within *Actinobacteria*, *Deinococci* within *Deinococcus*, and *Gammaproteobacteria*, *Alphaproteobacteria*, and *Deltaproteobacteria* within *Proteobacteria*. At the family level, significant differences were observed between pottery exterior samples and control samples, and between pottery exterior and interior samples. *Paenibacillaceae*, *Erysipelotrichaceae*, and *Xiphinematobacteraceae* were more abundant in pottery exterior samples than those in control samples (P <0.05). In addition to *Paenibacillaceae* and *Xiphinematobacteraceae*, *Phycisphaeraceae* was also more abundant in pottery exterior samples than in pottery interior samples (P <0.05). At the genus level, *Candidatus_Xiphinematobacter* was more abundant in pottery exterior samples compared to pottery interior samples and control samples (P <0.01). Among the bacterial taxa showing significant differences, only *Paenibacillaceae* in the pottery exterior sample displayed relative abundances exceeding 10% on average, while others were below 1% (figure).
+The dominant classes include *Bacilli*, *Clostridia*, and *Negativicutes* within *Firmicutes*; *Actinobacteria*, *Rubrobacteria*, *Thermoleophilia* within *Actinobacteria*, *Deinococci* within *Deinococcus*, and *Gammaproteobacteria*, *Alphaproteobacteria*, and *Deltaproteobacteria* within *Proteobacteria*. At the family level, significant differences were observed between pottery exterior samples and control samples, and between pottery exterior and interior samples. *Paenibacillaceae*, *Erysipelotrichaceae*, and *Xiphinematobacteraceae* were more abundant in pottery exterior samples than those in control samples (P <0.05; @fig-rel-ab-significant-plot: A). In addition to *Paenibacillaceae* and *Xiphinematobacteraceae*, *Phycisphaeraceae* was also more abundant in pottery exterior samples than in pottery interior samples (P <0.05). At the genus level, Candidatus *Xiphinematobacter* was more abundant in pottery exterior samples compared to pottery interior samples and control samples (P <0.01). Among the bacterial taxa showing significant differences, only *Paenibacillaceae* in the pottery exterior sample displayed relative abundances exceeding 10% on average, while others were below 1%.
 
-The V6 region has similar bacterial communities at the phylum level as the V4 region, with the exception of *Patescibacteria* (`r min(Pates$rel_ab)`- `r max(Pates$rel_ab)`%) in pottery samples, which was not detected in the reads of the V4 region (@fig-rel-ab: B). The dominant classes within *Patescibacteria* include *Parcubacteria*, *Microgenomatia*, and *Saccharimonadia*. We found a significant difference in the relative abundance of phyla between the pottery interior sample and soil samples from Gaoshan (P < 0.05), but none for Guijiabao samples. At the family level, *Paenibacillaceae* and *67_14* was more abundant in pottery exterior samples than in pottery interior samples (P <0.05). At the genus level, *Sphingomonas* was more abundant in the pottery interior samples than in the control samples (P <0.05). 
+The V6 region has similar bacterial communities at the phylum level as the V4 region, with the exception of *Patescibacteria* (`r min(Pates$rel_ab)`- `r max(Pates$rel_ab)`%) in pottery samples, which was not detected in the reads of the V4 region (@fig-rel-ab: B). The dominant classes within *Patescibacteria* include *Parcubacteria*, *Microgenomatia*, and *Saccharimonadia*. We found a significant difference in the relative abundance of phyla between the pottery interior sample and soil samples from Gaoshan (P < 0.05), but none for Guijiabao samples. At the family level, *Paenibacillaceae* and *67_14* was more abundant in pottery exterior samples than in pottery interior samples (P <0.05; @fig-rel-ab-significant-plot: B). At the genus level, *Sphingomonas* was more abundant in the pottery interior samples than in the control samples (P <0.05). 
 
 The V1 and ITS1 regions have higher proportions of unidentified reads than V4 and V6 regions (@fig-rel-ab: C-D). The bacterial communities at the phylum level for the V1 region are similar to those for the V4 and V6 regions, but there were no significant variations in composition between samples. For the ITS1 region of 18S rRNA, fungal communities at the phylum level were predominated by *Ascomycota* (`r min(Ascom_GJB$rel_ab)`- `r max(Ascom_GJB$rel_ab)`% for Guijiabao samples and `r min(Ascom_GS$rel_ab)`- `r max(Ascom_GS$rel_ab)`% for Gaoshan samples) and *Basidiomycota* (`r min(Basid_GJB$rel_ab)`- `r max(Basid_GJB$rel_ab)`% for Guijiabao samples and `r min(Basid_GS$rel_ab)`- `r max(Basid_GS$rel_ab)`% for Gaoshan samples. 
-
-B: Bacterial communities at the family level differed significantly in relative abundance between pottery exterior and control samples, and between pottery exterior and interior samples
 
 ```{r}
 #| label: fig-rel-ab
 #| echo: false
-#| cache: true
 #| fig-cap: "A, B, C: The taxonomic composition of bacterial communities in pottery interior, pottery exterior, soil, and control samples based on sequences of the V4, V6, and V1 regions. D: The taxonomic composition of bacterial communities based on sequences of the ITS1 region."
 library(here)
 knitr::include_graphics(here("analysis", "figures", "all_rel_ab_combine.png"))
+```
+
+```{r}
+#| label: fig-rel-ab-significant-plot
+#| echo: false
+#| fig-cap: "A: Bacterial communities at the family and genus level differed significantly in relative abundance between pottery exterior and control samples, and between pottery exterior and interior samples based on sequences of the V4 region. B: Bacterial communities at the family and genus level differed significantly in relative abundance between pottery exterior and interior samples, and between pottery interior and control samples based on sequences of the V6 region."
+library(here)
+knitr::include_graphics(here("analysis", "figures", "V4_V6_rel_sig_taxa_combine.png"))
 ```
 
 ## Beta diversity analysis
