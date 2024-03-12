@@ -45,23 +45,53 @@ ITS1_pot_ex_list<- as.vector(ITS1_pot_ex_df$Species)
 ITS1_soil_list <- as.vector(ITS1_soil_df$Species)
 
 # Venn diagram
-V4_venn <- list(control= V4_con_list , "pot-interior"= V4_pot_in_list,
+V4_venn <- list(control= V4_con_list, "pot-interior"= V4_pot_in_list,
                 "pot-exterior"= V4_pot_ex_list, soil= V4_soil_list)
 
-V1_venn <- list(control= V1_con_list , "pot-interior"= V1_pot_in_list,
+V1_venn <- list(control= V1_con_list, "pot-interior"= V1_pot_in_list,
                 "pot-exterior"= V1_pot_ex_list, soil= V1_soil_list)
 
-V6_venn <- list(control= V6_con_list , "pot-interior"= V6_pot_in_list,
+V6_venn <- list(control= V6_con_list, "pot-interior"= V6_pot_in_list,
                 "pot-exterior"= V6_pot_ex_list, soil= V6_soil_list)
 
-ITS1_venn <- list(control= ITS1_con_list , "pot-interior"= ITS1_pot_in_list,
+ITS1_venn <- list(control= ITS1_con_list, "pot-interior"= ITS1_pot_in_list,
                 "pot-exterior"= ITS1_pot_ex_list, soil= ITS1_soil_list)
 
-ggvenn(ITS1_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
-       stroke_size = 0.5, set_name_size = 4)+
+ggplot(d) +
+  geom_venn(aes(A = `Set 1`, B = `Set 2`)) +
+  coord_fixed() +
+  theme_void()
+
+V4_venn_diagram <-
+  ggvenn(V4_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
+       stroke_size = 0.5, set_name_size = 4, fill_alpha = 0.3)+
   theme(plot.background = element_rect(fill = "white", colour = "white"),
         strip.text = element_text(size= 12))
-ggsave(here::here("analysis", "figures", "ITS1_venndiag.png"), width = 5, height = 4, units = "in")
+
+V6_venn_diagram <-
+  ggvenn(V6_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
+         stroke_size = 0.5, set_name_size = 4, fill_alpha = 0.3)+
+  theme(plot.background = element_rect(fill = "white", colour = "white"),
+        strip.text = element_text(size= 12))
+
+V1_venn_diagram <-
+  ggvenn(V1_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
+         stroke_size = 0.5, set_name_size = 4, fill_alpha = 0.3)+
+  theme(plot.background = element_rect(fill = "white", colour = "white"),
+        strip.text = element_text(size= 12))
+
+ITS1_venn_diagram <-
+  ggvenn(ITS1_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
+         stroke_size = 0.5, set_name_size = 4, fill_alpha = 0.3)+
+  theme(plot.background = element_rect(fill = "white", colour = "white"),
+        strip.text = element_text(size= 12))
+
+library(cowplot)
+all_venn_diagram <-
+  plot_grid(V4_venn_diagram, V6_venn_diagram, V1_venn_diagram, ITS1_venn_diagram,
+            ncol = 2, labels = c('V4', 'V6', 'V1', 'ITS1')) #
+
+ggsave(here::here("analysis", "figures", "all_venn_diagram.png"), width = 10, height = 7.7, units = "in")
 
 # check the unique ones for each group
 unique_ASV <- function(target_list, list1, list2, list3, df) {
