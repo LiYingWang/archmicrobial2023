@@ -3,9 +3,9 @@
 library(VennDiagram)
 library(ggvenn)
 
-# ASVs/species in common or difference across four groups for venn diagram
+# Taxa in common or difference across four groups for venn diagram
 V4_con_df <- V4_tax_rarefy_df %>% filter(group == "control"&!count == 0&!Species == "unclassified") #based on species
-V4_pot_in_df <- V4_tax_rarefy_df %>% filter(group == "pot-interior"&!count == 0&!Species == "unclassified")
+V4_pot_in_df <- V4_tax_rarefy_df %>% filter(group == "pot-interior"&!count == 0&!Species== "unclassified")
 V4_pot_ex_df <- V4_tax_rarefy_df %>% filter(group == "pot-exterior"&!count == 0&!Species == "unclassified")
 V4_soil_df <- V4_tax_rarefy_df %>% filter(group =="soil"&!count == 0&!Species == "unclassified")
 
@@ -57,41 +57,36 @@ V6_venn <- list(control= V6_con_list, "pot-interior"= V6_pot_in_list,
 ITS1_venn <- list(control= ITS1_con_list, "pot-interior"= ITS1_pot_in_list,
                 "pot-exterior"= ITS1_pot_ex_list, soil= ITS1_soil_list)
 
-ggplot(d) +
-  geom_venn(aes(A = `Set 1`, B = `Set 2`)) +
-  coord_fixed() +
-  theme_void()
-
 V4_venn_diagram <-
   ggvenn(V4_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
-       stroke_size = 0.5, set_name_size = 4, fill_alpha = 0.3)+
+       stroke_size = 0.5, set_name_size = 5, fill_alpha = 0.3)+
   theme(plot.background = element_rect(fill = "white", colour = "white"),
-        strip.text = element_text(size= 12))
+        strip.text = element_text(size= 14))
 
 V6_venn_diagram <-
   ggvenn(V6_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
-         stroke_size = 0.5, set_name_size = 4, fill_alpha = 0.3)+
+         stroke_size = 0.5, set_name_size = 5, fill_alpha = 0.3)+
   theme(plot.background = element_rect(fill = "white", colour = "white"),
-        strip.text = element_text(size= 12))
+        strip.text = element_text(size= 14))
 
 V1_venn_diagram <-
   ggvenn(V1_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
-         stroke_size = 0.5, set_name_size = 4, fill_alpha = 0.3)+
+         stroke_size = 0.5, set_name_size = 5, fill_alpha = 0.3)+
   theme(plot.background = element_rect(fill = "white", colour = "white"),
-        strip.text = element_text(size= 12))
+        strip.text = element_text(size= 14))
 
 ITS1_venn_diagram <-
   ggvenn(ITS1_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
-         stroke_size = 0.5, set_name_size = 4, fill_alpha = 0.3)+
+         stroke_size = 0.5, set_name_size = 5, fill_alpha = 0.3)+
   theme(plot.background = element_rect(fill = "white", colour = "white"),
-        strip.text = element_text(size= 12))
+        strip.text = element_text(size= 14))
 
 library(cowplot)
 all_venn_diagram <-
   plot_grid(V4_venn_diagram, V6_venn_diagram, V1_venn_diagram, ITS1_venn_diagram,
             ncol = 2, labels = c('V4', 'V6', 'V1', 'ITS1')) #
 
-ggsave(here::here("analysis", "figures", "all_venn_diagram.png"), width = 10, height = 7.7, units = "in")
+ggsave(here::here("analysis", "figures", "phylum_all_venn_diagram.png"), width = 10, height = 7.5, units = "in")
 
 # check the unique ones for each group
 unique_ASV <- function(target_list, list1, list2, list3, df) {
