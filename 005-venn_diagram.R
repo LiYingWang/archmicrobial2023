@@ -9,7 +9,7 @@ V4_pot_in_df <- V4_tax_rarefy_df %>% filter(group == "pot-interior"&!count == 0&
 V4_pot_ex_df <- V4_tax_rarefy_df %>% filter(group == "pot-exterior"&!count == 0&!Species == "unclassified")
 V4_soil_df <- V4_tax_rarefy_df %>% filter(group =="soil"&!count == 0&!Species == "unclassified")
 
-V4_con_list <- as.vector(V4_con_df$Species) # based on species
+V4_con_list <- as.vector(V4_con_df$Species)
 V4_pot_in_list <- as.vector(V4_pot_in_df$Species)
 V4_pot_ex_list<- as.vector(V4_pot_ex_df$Species)
 V4_soil_list <- as.vector(V4_soil_df$Species)
@@ -19,7 +19,7 @@ V1_pot_in_df <- V1_tax_rarefy_df %>% filter(group == "pot-interior"&!count == 0&
 V1_pot_ex_df <- V1_tax_rarefy_df %>% filter(group == "pot-exterior"&!count == 0&!Species == "unclassified")
 V1_soil_df <- V1_tax_rarefy_df %>% filter(group =="soil"&!count == 0&!Species == "unclassified")
 
-V1_con_list <- as.vector(V1_con_df$Species) # based on species
+V1_con_list <- as.vector(V1_con_df$Species)
 V1_pot_in_list <- as.vector(V1_pot_in_df$Species)
 V1_pot_ex_list<- as.vector(V1_pot_ex_df$Species)
 V1_soil_list <- as.vector(V1_soil_df$Species)
@@ -44,47 +44,34 @@ ITS1_pot_in_list <- as.vector(ITS1_pot_in_df$Species)
 ITS1_pot_ex_list<- as.vector(ITS1_pot_ex_df$Species)
 ITS1_soil_list <- as.vector(ITS1_soil_df$Species)
 
-# Venn diagram
-V4_venn <- list(control= V4_con_list, "pot-interior"= V4_pot_in_list,
-                "pot-exterior"= V4_pot_ex_list, soil= V4_soil_list)
+# make a list for making venn diagram
+venn_list <- function(list1, list2, list3, list4) {
+  list(control= list1, "pot-interior"= list2, "pot-exterior"= list3, soil= list4)
+}
 
-V1_venn <- list(control= V1_con_list, "pot-interior"= V1_pot_in_list,
-                "pot-exterior"= V1_pot_ex_list, soil= V1_soil_list)
+V4_venn <- venn_list(V4_con_list, V4_pot_in_list, V4_pot_ex_list, V4_soil_list)
+V1_venn <- venn_list(V1_con_list, V1_pot_in_list, V1_pot_ex_list, V1_soil_list)
+V6_venn <- venn_list(V6_con_list, V6_pot_in_list, V6_pot_ex_list, V6_soil_list)
+ITS1_venn <- venn_list(ITS1_con_list, ITS1_pot_in_list, ITS1_pot_ex_list, ITS1_soil_list)
 
-V6_venn <- list(control= V6_con_list, "pot-interior"= V6_pot_in_list,
-                "pot-exterior"= V6_pot_ex_list, soil= V6_soil_list)
+# venn diagram
+venn_diagram <- function(list){
+  list %>%
+    ggvenn(fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
+           stroke_size = 0.5, set_name_size = 5, fill_alpha = 0.3) +
+    theme(plot.background = element_rect(fill = "white", colour = "white"),
+          strip.text = element_text(size= 14))
+}
 
-ITS1_venn <- list(control= ITS1_con_list, "pot-interior"= ITS1_pot_in_list,
-                "pot-exterior"= ITS1_pot_ex_list, soil= ITS1_soil_list)
-
-V4_venn_diagram <-
-  ggvenn(V4_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
-       stroke_size = 0.5, set_name_size = 5, fill_alpha = 0.3)+
-  theme(plot.background = element_rect(fill = "white", colour = "white"),
-        strip.text = element_text(size= 14))
-
-V6_venn_diagram <-
-  ggvenn(V6_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
-         stroke_size = 0.5, set_name_size = 5, fill_alpha = 0.3)+
-  theme(plot.background = element_rect(fill = "white", colour = "white"),
-        strip.text = element_text(size= 14))
-
-V1_venn_diagram <-
-  ggvenn(V1_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
-         stroke_size = 0.5, set_name_size = 5, fill_alpha = 0.3)+
-  theme(plot.background = element_rect(fill = "white", colour = "white"),
-        strip.text = element_text(size= 14))
-
-ITS1_venn_diagram <-
-  ggvenn(ITS1_venn, fill_color = c("#0073C2FF", "#EFC000FF", "#33A02C", "#CD534CFF"),
-         stroke_size = 0.5, set_name_size = 5, fill_alpha = 0.3)+
-  theme(plot.background = element_rect(fill = "white", colour = "white"),
-        strip.text = element_text(size= 14))
+V4_venn_diagram <- venn_diagram(V4_venn)
+V6_venn_diagram <- venn_diagram(V6_venn)
+V1_venn_diagram <- venn_diagram(V1_venn)
+ITS1_venn_diagram <- venn_diagram(ITS1_venn)
 
 library(cowplot)
 all_venn_diagram <-
   plot_grid(V4_venn_diagram, V6_venn_diagram, V1_venn_diagram, ITS1_venn_diagram,
-            ncol = 2, labels = c('V4', 'V6', 'V1', 'ITS1')) #
+            ncol = 2, labels = c('V4', 'V6', 'V1', 'ITS1'))
 
 ggsave(here::here("analysis", "figures", "phylum_all_venn_diagram.png"), width = 10, height = 7.5, units = "in")
 
