@@ -75,16 +75,80 @@ all_venn_diagram <-
 
 ggsave(here::here("analysis", "figures", "phylum_all_venn_diagram.png"), width = 10, height = 7.5, units = "in")
 
+# combine the taxonomy
+combine_taxa <- function(df){
+    df %>%
+    unite("taxa", Domain:Species, sep = ";") %>%
+    mutate(taxa = str_remove_all(taxa, ";unclassified"))
+}
+
+V4_tax_rarefy_com_df <-combine_taxa(V4_tax_rarefy_df)
+V1_tax_rarefy_com_df <-combine_taxa(V1_tax_rarefy_df)
+V6_tax_rarefy_com_df <-combine_taxa(V6_tax_rarefy_df)
+ITS1_tax_rarefy_com_df <-combine_taxa(ITS1_tax_rarefy_df)
+
+# make a list for combined taxonomy
+V4_taxa_con_df <- V4_tax_rarefy_com_df %>% filter(group == "control"&!count == 0&!taxa == "unclassified")
+V4_taxa_pot_in_df <- V4_tax_rarefy_com_df %>% filter(group == "pot-interior"&!count == 0&!taxa == "unclassified")
+V4_taxa_pot_ex_df <- V4_tax_rarefy_com_df %>% filter(group == "pot-exterior"&!count == 0&!taxa == "unclassified")
+V4_taxa_soil_df <- V4_tax_rarefy_com_df %>% filter(group =="soil"&!count == 0&!taxa == "unclassified")
+
+V4_taxa_con_list <- as.vector(V4_taxa_con_df$taxa)
+V4_taxa_pot_in_list <- as.vector(V4_taxa_pot_in_df$taxa)
+V4_taxa_pot_ex_list<- as.vector(V4_taxa_pot_ex_df$taxa)
+V4_taxa_soil_list <- as.vector(V4_taxa_soil_df$taxa)
+
+V1_taxa_con_df <- V1_tax_rarefy_com_df %>% filter(group == "control"&!count == 0&!taxa == "unclassified")
+V1_taxa_pot_in_df <- V1_tax_rarefy_com_df %>% filter(group == "pot-interior"&!count == 0&!taxa == "unclassified")
+V1_taxa_pot_ex_df <- V1_tax_rarefy_com_df %>% filter(group == "pot-exterior"&!count == 0&!taxa == "unclassified")
+V1_taxa_soil_df <- V1_tax_rarefy_com_df %>% filter(group =="soil"&!count == 0&!taxa == "unclassified")
+
+V1_taxa_con_list <- as.vector(V1_taxa_con_df$taxa)
+V1_taxa_pot_in_list <- as.vector(V1_taxa_pot_in_df$taxa)
+V1_taxa_pot_ex_list<- as.vector(V1_taxa_pot_ex_df$taxa)
+V1_taxa_soil_list <- as.vector(V1_taxa_soil_df$taxa)
+
+V6_taxa_con_df <- V6_tax_rarefy_com_df %>% filter(group == "control"&!count == 0&!taxa == "unclassified")
+V6_taxa_pot_in_df <- V6_tax_rarefy_com_df %>% filter(group == "pot-interior"&!count == 0&!taxa == "unclassified")
+V6_taxa_pot_ex_df <- V6_tax_rarefy_com_df %>% filter(group == "pot-exterior"&!count == 0&!taxa == "unclassified")
+V6_taxa_soil_df <- V6_tax_rarefy_com_df %>% filter(group =="soil"&!count == 0&!taxa == "unclassified")
+
+V6_taxa_con_list <- as.vector(V6_taxa_con_df$taxa)
+V6_taxa_pot_in_list <- as.vector(V6_taxa_pot_in_df$taxa)
+V6_taxa_pot_ex_list<- as.vector(V6_taxa_pot_ex_df$taxa)
+V6_taxa_soil_list <- as.vector(V6_taxa_soil_df$taxa)
+
+ITS1_taxa_con_df <- ITS1_tax_rarefy_com_df %>% filter(group == "control"&!count == 0&!taxa == "unclassified")
+ITS1_taxa_pot_in_df <- ITS1_tax_rarefy_com_df %>% filter(group == "pot-interior"&!count == 0&!taxa == "unclassified")
+ITS1_taxa_pot_ex_df <- ITS1_tax_rarefy_com_df %>% filter(group == "pot-exterior"&!count == 0&!taxa == "unclassified")
+ITS1_taxa_soil_df <- ITS1_tax_rarefy_com_df %>% filter(group =="soil"&!count == 0&!taxa == "unclassified")
+
+ITS1_taxa_con_list <- as.vector(ITS1_taxa_con_df$taxa)
+ITS1_taxa_pot_in_list <- as.vector(ITS1_taxa_pot_in_df$taxa)
+ITS1_taxa_pot_ex_list<- as.vector(ITS1_taxa_pot_ex_df$taxa)
+ITS1_taxa_soil_list <- as.vector(ITS1_taxa_soil_df$taxa)
+
+V4_taxa_venn <- venn_list(V4_taxa_con_list, V4_taxa_pot_in_list, V4_taxa_pot_ex_list, V4_taxa_soil_list)
+V1_taxa_venn <- venn_list(V1_taxa_con_list, V1_taxa_pot_in_list, V1_taxa_pot_ex_list, V1_taxa_soil_list)
+V6_taxa_venn <- venn_list(V6_taxa_con_list, V6_taxa_pot_in_list, V6_taxa_pot_ex_list, V6_taxa_soil_list)
+ITS1_taxa_venn <- venn_list(ITS1_taxa_con_list, ITS1_taxa_pot_in_list, ITS1_taxa_pot_ex_list, ITS1_taxa_soil_list)
+
+# venn diagram
+V4_taxa_venn_diagram <- venn_diagram(V4_taxa_venn)
+V1_taxa_venn_diagram <- venn_diagram(V1_taxa_venn)
+V6_taxa_venn_diagram <- venn_diagram(V6_taxa_venn)
+ITS1_taxa_venn_diagram <- venn_diagram(ITS1_taxa_venn)
+
 # check the unique ones for each group
 unique_ASV <- function(target_list, list1, list2, list3, df) {
   setdiff(target_list, c(list1, list2, list3)) %>%
     as.data.frame() %>%
-    setNames("Species") %>%
-    inner_join(df, by = c("Species"= "Species"))
+    setNames("taxa") %>%
+    inner_join(df, by = c("taxa"= "taxa")) # Species
 }
 
 V4_con_uni_ASV_df <- unique_ASV(V4_con_list, V4_pot_in_list, V4_pot_ex_list, V4_soil_list, V4_con_df)
-V4_potin_uni_ASV_df <- unique_ASV(V4_pot_in_list, V4_con_list, V4_pot_ex_list, V4_soil_list, V4_pot_in_df)
+V6_potin_uni_ASV_df <- unique_ASV(V6_taxa_pot_in_list, V6_taxa_con_list, V6_taxa_pot_ex_list, V6_taxa_soil_list, V6_taxa_pot_in_df)
 V4_potex_uni_ASV_df <- unique_ASV(V4_pot_ex_list, V4_con_list, V4_pot_in_list, V4_soil_list, V4_pot_ex_df)
 V4_soil_uni_ASV_df <- unique_ASV(V4_soil_list, V4_con_list, V4_pot_in_list, V4_pot_ex_list, V4_soil_df)
 
@@ -111,7 +175,7 @@ x <- setdiff(a, c(b, c)) %>%
 # barplot for 16S unique ones at Species/Genus level
 bar_pot_in <-
   V4_potin_uni_ASV_df %>% # replace the region here
-  #distinct(ASV_ID, .keep_all = TRUE)
+  #distinct(ASV_ID, .keep_all = TRUE) %>%
   filter(!Species == "unclassified") %>%
   ggplot(aes(x= label, fill= Species)) + # Species for V1, V4 & V6
   geom_bar(position="stack") + #stack
