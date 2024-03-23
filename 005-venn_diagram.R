@@ -139,6 +139,12 @@ V1_taxa_venn_diagram <- venn_diagram(V1_taxa_venn)
 V6_taxa_venn_diagram <- venn_diagram(V6_taxa_venn)
 ITS1_taxa_venn_diagram <- venn_diagram(ITS1_taxa_venn)
 
+all_taxa_venn_diagram <-
+  plot_grid(V4_taxa_venn_diagram, V6_taxa_venn_diagram, V1_taxa_venn_diagram, ITS1_taxa_venn_diagram,
+            ncol = 2, labels = c('V4', 'V6', 'V1', 'ITS1'))
+
+ggsave(here::here("analysis", "figures", "all_taxa_venn_diagram.png"), width = 10, height = 7.5, units = "in")
+
 # check the unique ones for each group
 unique_ASV <- function(target_list, list1, list2, list3, df) {
   setdiff(target_list, c(list1, list2, list3)) %>%
