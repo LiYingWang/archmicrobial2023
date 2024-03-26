@@ -621,7 +621,6 @@ ggsave(here::here("analysis","figures","V4_V6_rel_sig_taxa_combine.png"),
 The dominant classes include *Bacilli*, *Clostridia*, and *Negativicutes* within *Firmicutes*; *Actinobacteria*, *Rubrobacteria*, *Thermoleophilia* within *Actinobacteria*, *Deinococci* within *Deinococcus*, and *Gammaproteobacteria*, *Alphaproteobacteria*, and *Deltaproteobacteria* within *Proteobacteria*. At the family level, significant differences were observed between pottery exterior samples and control samples, and between pottery exterior and interior samples. *Paenibacillaceae*, *Erysipelotrichaceae*, and *Xiphinematobacteraceae* were more abundant in pottery exterior samples than those in control samples (P <0.05; @fig-rel-ab-significant-plot: A). In addition to *Paenibacillaceae* and *Xiphinematobacteraceae*, *Phycisphaeraceae* was also more abundant in pottery exterior samples than in pottery interior samples (P <0.05). At the genus level, Candidatus *Xiphinematobacter* was more abundant in pottery exterior samples compared to pottery interior samples and control samples (P <0.01). Among the bacterial taxa showing significant differences, only *Paenibacillaceae* in the pottery exterior sample displayed relative abundances exceeding 10% on average, while others were below 1%.
 
 The V6 region has similar bacterial communities at the phylum level as the V4 region, with the exception of *Patescibacteria* (`r min(Pates$rel_ab)`- `r max(Pates$rel_ab)`%) in pottery samples, which was not detected in the reads of the V4 region (@fig-rel-ab: B). The dominant classes within *Patescibacteria* include *Parcubacteria*, *Microgenomatia*, and *Saccharimonadia*. We found a significant difference in the relative abundance of phyla between the pottery interior sample and soil samples from Gaoshan (P < 0.05), but none for Guijiabao samples. At the family level, *Paenibacillaceae* and *67_14* was more abundant in pottery exterior samples than in pottery interior samples (P <0.05; @fig-rel-ab-significant-plot: B). At the genus level, *Sphingomonas* was more abundant in the pottery interior samples than in the control samples (P <0.05). 
-
 The V1 and ITS1 regions have higher proportions of unidentified reads than V4 and V6 regions (@fig-rel-ab: C-D). The bacterial communities at the phylum level for the V1 region are similar to those for the V4 and V6 regions, but there were no significant variations in composition between samples. For the ITS1 region of 18S rRNA, fungal communities at the phylum level were predominated by *Ascomycota* (`r min(Ascom_GJB$rel_ab)`- `r max(Ascom_GJB$rel_ab)`% for Guijiabao samples and `r min(Ascom_GS$rel_ab)`- `r max(Ascom_GS$rel_ab)`% for Gaoshan samples) and *Basidiomycota* (`r min(Basid_GJB$rel_ab)`- `r max(Basid_GJB$rel_ab)`% for Guijiabao samples and `r min(Basid_GS$rel_ab)`- `r max(Basid_GS$rel_ab)`% for Gaoshan samples. 
 
 ```{r}
@@ -651,9 +650,16 @@ We used principal coordinates analysis (PCoA) based on binary Jaccard and Bray-C
 knitr::include_graphics(here("analysis", "figures", "V4_V6_combine_PcoA.png"))
 ```
 
+## Shared and unique microbial communities
+Pairwise comparison of taxonomy of each amplicon sequence variant (ASV) among different sample groups was conducted to investigate any unique microbial communities particularly in pottery samples. For the sequence data of 16S rRNA regions, V6 sequences show higher number of unique taxonomy (46, 10%) in pottery interior samples compared to those of V1 sequences (27, 19.3%) and V4 sequences (7, 1.1%), wheres the sequence of 18S rRNA based on ITS1 region presents no specific taxonomy in pottery interior samples (@fig-venn-diagram). Similar patterns were observed for pottery exterior samples, where V6 sequences present a higher number of unique taxonomy (42, 9.1%), followed by V1 sequences (11, 7.9%), V4 sequences (8, 1.3%), and ITS1 sequences (4, 9.8%). A close look at the unique taxa
 
-Venn diagrams
-The abundant taxa at ASV level & the abundant taxa at genus level
+```{r}
+#| label: fig-venn-diagram
+#| echo: false
+#| cache: true
+#| fig-cap: "Venn diagrams based on reads from each regions analyzed in this study showing shared and specific species for bacterial and fungal communities for four sample groups"
+knitr::include_graphics(here("analysis", "figures", "all_taxa_venn_diagram.png"))
+```
 
 Questions:
 
