@@ -4,13 +4,11 @@ library(tidyverse)
 #library(lme4) #linear mixed-effects models like repeated measures analysis
 #library(phangorn) #read in mothur-formatted files
 #library(phyloseq) #for UniFrac analyses. Organizing, linking, storing, and analyzing of phylogenetic sequencing data
-# library(plotly)
 library(ggplot2)
 library(vegan) #tools for descriptive community ecology. Bray-Curtis and Jaccard analyses
-library(VennDiagram) #pretty Venn disgrams
 #library(venneuler)
 
-# read meta data to get variables of context
+# read meta data to get context
 library(readxl)
 context <- read_excel(here::here("analysis","data", "raw_data", "GJB_amp_meta.xlsx"))
 context <- context %>%
@@ -80,7 +78,7 @@ V1_tax_clean <- tax_clean(OTU_V1, "V1")
 V6_tax_clean <- tax_clean(OTU_V6, "V6")
 ITS1_tax_clean <- tax_clean(OTU_ITS1, "ITS1")
 
-# function to separate the taxonomy data
+# function to separate taxonomic rank
 tax_clean_sep <- function(df){
   df %>%
     separate(taxonomy,
@@ -105,7 +103,7 @@ ITS1_tax_clean_sep <- tax_clean_sep(ITS1_tax_clean)
 
 sum(is.na(V6_tax_clean_sep$Species))
 
-# join tidy reads and taxonomy dataframes
+# combine tidied reads and taxonomy dataframes
 V4_context <- context %>% filter(Region == "V4")
 OTU_df_V4_original <-
   OTU_df_V4 %>%
@@ -154,7 +152,7 @@ write.csv(OTU_clean_wider_V6,
 write.csv(OTU_clean_wider_ITS1,
           file = here::here("analysis","data","derived_data","ITS1_shared_format.csv"))
 
-#example: calculate richness and Chao1 using vegan package
+# example: calculate richness and Chao1 using vegan package
 data_richness <- estimateR(OTU_clean_wider)
 data_evenness <- diversity(OTU_clean_wider) / log(specnumber(OTU_clean_wider))
 data_shannon <- diversity(OTU_clean_wider, index = "shannon")
